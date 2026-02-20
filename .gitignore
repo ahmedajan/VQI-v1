@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Datasets (too large, obtain independently)
+Datasets/
+datasets/
+
+# Large intermediate data (regenerable from code)
+data/embeddings/
+data/features/
+data/provider_scores/
+data/pretrained/
+data/test_scores/
+data/labels/
+data/step8_eval/
+data/cross_analysis/
+data/validation/
+data/validation_v/
+fisher_values.csv
+
+# Step 9 GUI application files
+conformance/
+vqi/gui/
+vqi/engine.py
+vqi/feedback.py
+vqi_app.spec
+installer/
+data/feature_percentiles_*.npz
+data/feature_categories.json
+
+# Build artifacts
+*.exe
+*.zip
+VQI_Installer/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log

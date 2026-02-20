@@ -1,0 +1,29 @@
+# VQI: Voice Quality Index
+# Core dependencies for training and evaluation pipeline
+
+# Deep learning
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# Scientific computing
+numpy>=1.24.0
+scipy>=1.10.0
+scikit-learn>=1.2.0
+pandas>=2.0.0
+
+# Audio processing
+soundfile>=0.12.0
+praat-parselmouth>=0.4.5
+
+# Speaker recognition providers
+speechbrain>=1.0.0
+transformers>=4.30.0
+huggingface-hub>=0.20.0
+
+# Utilities
+joblib>=1.2.0
+PyYAML>=6.0
+
+# Optional (for specific features)
+# onnxruntime>=1.15.0    # DNSMOS quality estimation
+# nisqa>=1.0             # NISQA quality estimation

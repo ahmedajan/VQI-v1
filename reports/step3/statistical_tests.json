@@ -1,0 +1,50 @@
+{
+  "chi2": {
+    "statistic": 1.3950750815095483,
+    "p_value": 0.49780963167386705,
+    "dof": 2,
+    "contingency": {
+      "0": {
+        "voices": 19800,
+        "voxceleb1_dev": 142648,
+        "voxceleb2_dev": 1047994
+      },
+      "1": {
+        "voices": 0,
+        "voxceleb1_dev": 0,
+        "voxceleb2_dev": 9
+      }
+    }
+  },
+  "ks_tests": {
+    "voices vs voxceleb1_dev": {
+      "statistic": 0.1392607443964631,
+      "p_value": 1.2713804075636902e-294
+    },
+    "voices vs voxceleb2_dev": {
+      "statistic": 0.2153453791003779,
+      "p_value": 0.0
+    },
+    "voxceleb1_dev vs voxceleb2_dev": {
+      "statistic": 0.08282159548847262,
+      "p_value": 0.0
+    }
+  },
+  "bootstrap_ci": {
+    "voices": {
+      "mean": 0.9824094247474748,
+      "ci_lo": 0.9817303129532828,
+      "ci_hi": 0.9830815039722223
+    },
+    "voxceleb1_dev": {
+      "mean": 0.9726189130026359,
+      "ci_lo": 0.9723219442114507,
+      "ci_hi": 0.9729128545026919
+    },
+    "voxceleb2_dev": {
+      "mean": 0.980382047719329,
+      "ci_lo": 0.980295362498342,
+      "ci_hi": 0.9804699455947883
+    }
+  }
+}
