@@ -48,8 +48,11 @@ data/feature_categories.json
 
 # Build artifacts
 *.exe
-*.zip
 VQI_Installer/
+
+# Release binaries (too large for git)
+releases/*.zip
+Releases/*.zip
 
 # OS files
 .DS_Store

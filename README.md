@@ -20,45 +20,49 @@ Higher scores indicate better quality for speaker recognition systems.
 
 ## Desktop Application
 
-For a standalone Windows desktop application with GUI, gauges, and feedback, see [VQI-App](https://github.com/YOUR_USERNAME/VQI-App).
+A standalone Windows desktop application is available with a graphical interface, animated score gauges, and plain-language feedback.
 
-## Datasets Required
+### Download
 
-VQI is trained and evaluated on 8 publicly available speech datasets. You must obtain these independently (see [DATASETS.md](DATASETS.md) for download links and expected directory structure):
+**[Download VQI v1.0 from Google Drive](https://drive.google.com/drive/folders/1C9p9ENf_eA-GmDh--iXlX6bwLdupAkh6)**
 
-| Dataset | Speakers | Utterances | Used For |
-|---------|----------|------------|----------|
-| VoxCeleb1 | 1,251 | 153,516 | Training + Testing |
-| VoxCeleb2 | 6,112 | 1,128,246 | Training |
-| LibriSpeech | 2,484 | 292,367 | Training + Testing |
-| VCTK | 110 | 44,455 | Testing |
-| VOiCES | 300 | 22,000+ | Training |
-| CN-Celeb1 | 1,000 | 126,532 | Testing |
-| MUSAN | -- | -- | Noise augmentation (training labels) |
-| RIR | -- | -- | Reverberation augmentation (training labels) |
+1. Download **`VQI-v1.0-windows.zip`** from the link above
+2. Extract the ZIP to any folder on your computer
+3. Open the extracted folder and run **`VQI.exe`**
 
-## Installation
+No installation or Python required.
 
-```bash
-# Clone this repository
-git clone https://github.com/YOUR_USERNAME/VQI.git
-cd VQI
+### System Requirements
 
-# Install dependencies
-pip install -r requirements.txt
+- Windows 10 or Windows 11 (64-bit)
+- 8 GB RAM minimum (16 GB recommended)
+- ~5 GB free disk space
+- Audio input device (for microphone recording feature)
 
-# Download pre-trained models (if not using Git LFS)
-python scripts/download_models.py
-```
+### Screenshot
 
-### Requirements
+![VQI Desktop Application](screenshots/main_window.png)
 
-- Python 3.10+
-- PyTorch 2.0+ (with CUDA recommended for embedding extraction)
-- ~16GB RAM for feature extraction
-- ~50GB disk for datasets (not included)
+### Features
 
-## Quick Start: Score a Single File
+- **File Upload:** Drag-and-drop or browse for audio files (WAV, FLAC, MP3, M4A, OGG)
+- **Microphone Recording:** Record directly with device selection and live VU meter
+- **Dual Quality Scores:** Animated color-coded 0-100 gauge displays for VQI-S and VQI-V
+- **Plain-Language Feedback:** Actionable suggestions to improve recording quality
+- **Expert Diagnostics:** Per-feature percentile analysis for technical users
+- **Visualization:** Waveform, spectrogram, and mel spectrogram display
+- **Export Reports:** Save detailed quality reports as text files
+
+### Troubleshooting
+
+- **VQI.exe does not start:** Ensure the entire folder is extracted, including the `_internal` subfolder. Do not move VQI.exe out of its folder.
+- **Slow first scoring:** The application loads machine learning models at startup (~1-2 seconds). Subsequent scores are faster.
+- **No audio devices found:** Check that your microphone is connected and Windows recognizes it.
+- **Unsupported format:** Convert your audio to WAV or FLAC for best compatibility.
+
+## Python Library
+
+### Quick Start: Score a Single File
 
 ```python
 from vqi.preprocessing.audio_loader import load_audio
@@ -83,6 +87,42 @@ clf = load_model("models/vqi_rf_model.joblib")
 # Select only the 430 trained features (see data/evaluation/selected_features.txt)
 # score = predict_score(clf, selected_feature_vector)
 ```
+
+### Installation
+
+```bash
+# Clone this repository
+git clone https://github.com/YOUR_USERNAME/VQI.git
+cd VQI
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Download pre-trained models (if not using Git LFS)
+python scripts/download_models.py
+```
+
+### Requirements
+
+- Python 3.10+
+- PyTorch 2.0+ (with CUDA recommended for embedding extraction)
+- ~16GB RAM for feature extraction
+- ~50GB disk for datasets (not included)
+
+## Datasets Required
+
+VQI is trained and evaluated on 8 publicly available speech datasets. You must obtain these independently (see [DATASETS.md](DATASETS.md) for download links and expected directory structure):
+
+| Dataset | Speakers | Utterances | Used For |
+|---------|----------|------------|----------|
+| VoxCeleb1 | 1,251 | 153,516 | Training + Testing |
+| VoxCeleb2 | 6,112 | 1,128,246 | Training |
+| LibriSpeech | 2,484 | 292,367 | Training + Testing |
+| VCTK | 110 | 44,455 | Testing |
+| VOiCES | 300 | 22,000+ | Training |
+| CN-Celeb1 | 1,000 | 126,532 | Testing |
+| MUSAN | -- | -- | Noise augmentation (training labels) |
+| RIR | -- | -- | Reverberation augmentation (training labels) |
 
 ## Reproducing the Full Pipeline
 
@@ -168,6 +208,10 @@ VQI/
 |-- models/                 # Pre-trained RF models (.joblib)
 |-- data/                   # Split manifests, labels, selected features
 |-- reports/                # Visualizations and analysis for each step
+|-- screenshots/            # Desktop application screenshots
+|-- CHANGELOG.md            # Application release history
+|-- DATASETS.md             # Dataset download links and directory structure
+|-- requirements.txt        # Python dependencies
 ```
 
 ## Results Summary
