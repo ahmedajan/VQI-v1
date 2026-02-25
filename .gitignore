@@ -34,6 +34,10 @@ data/step8_eval/
 data/cross_analysis/
 data/validation/
 data/validation_v/
+data/validation_pca90/
+data/validation_pca90_v/
+data/step8_eval_pca90/
+data/test_scores_pca90/
 fisher_values.csv
 
 # Step 9 GUI application files

@@ -1,0 +1,18 @@
+n_estimators: 1000
+max_features: 12
+oob_error: 0.198393
+oob_accuracy: 0.801607
+training_accuracy: 0.99724
+n_samples: 20288
+n_features: 156
+n_class_0: 10144
+n_class_1: 10144
+confusion_matrix:
+- - 10095
+  - 49
+- - 7
+  - 10137
+precision_0: 0.9993
+recall_0: 0.9952
+precision_1: 0.9952
+recall_1: 0.9993

@@ -14,8 +14,11 @@ Higher scores indicate better quality for speaker recognition systems.
 **Key Results:**
 - Trained on 1.2 million speech samples from 8 datasets
 - Evaluated against 5 speaker recognition systems (ECAPA-TDNN, ResNetSE34, ECAPA2, x-vector, WavLM)
-- VQI-S: AUC = 0.8719, best ERC = 47.6% FNMR reduction at 20% rejection
-- VQI-V: AUC = 0.8812, best ERC = 26.9% FNMR reduction at 20% rejection
+- Full-feature baseline: VQI-S AUC = 0.8719, VQI-V AUC = 0.8812
+- **Deployed model (v2.0):** PCA-90% pipeline with 77% dimensionality reduction (VQI-S) and 65% (VQI-V)
+- PCA-90% VQI-S: AUC = 0.8600, best ERC = 38.0% FNMR reduction at 20% rejection
+- PCA-90% VQI-V: AUC = 0.8619, best ERC = 24.0% FNMR reduction at 30% rejection
+- 5-way DR comparison: Full vs PCA-90% vs PCA-95% vs ICA vs Factor Analysis
 - Cross-system generalization confirmed (trained on 3 providers, evaluated on 5)
 
 ## Desktop Application
@@ -24,11 +27,13 @@ A standalone Windows desktop application is available with a graphical interface
 
 ### Download
 
-**[Download VQI v1.0 from Google Drive](https://drive.google.com/drive/folders/1C9p9ENf_eA-GmDh--iXlX6bwLdupAkh6)**
+**[Download VQI v2.0 from Google Drive](https://drive.google.com/drive/folders/1C9p9ENf_eA-GmDh--iXlX6bwLdupAkh6)**
 
-1. Download **`VQI-v1.0-windows.zip`** from the link above
+1. Download **`VQI-v2.0-windows.zip`** from the link above
 2. Extract the ZIP to any folder on your computer
 3. Open the extracted folder and run **`VQI.exe`**
+
+v2.0 uses the PCA-90% scoring pipeline for faster, more compact inference.
 
 No installation or Python required.
 
@@ -82,10 +87,24 @@ speech = reconstruct_from_mask(normalized, mask)
 features_s, intermediates = compute_all_features(speech, sr, mask, waveform)
 features_v = compute_all_features_v(speech, sr, mask, intermediates)
 
-# Load model and predict
+# Load model and predict (full-feature baseline)
 clf = load_model("models/vqi_rf_model.joblib")
 # Select only the 430 trained features (see data/evaluation/selected_features.txt)
 # score = predict_score(clf, selected_feature_vector)
+```
+
+#### PCA-90% Pipeline (Deployed Model)
+
+```python
+import joblib
+
+# Load PCA-90% pipeline components
+scaler = joblib.load("models/vqi_pca_scaler_s.joblib")
+pca = joblib.load("models/vqi_pca_transformer_s.joblib")
+clf = joblib.load("models/vqi_rf_pca_model.joblib")
+
+# Score: features → scale → PCA → RF probability → [0-100]
+score = int(clf.predict_proba(pca.transform(scaler.transform(features.reshape(1, -1))))[0, 1] * 100)
 ```
 
 ### Installation
@@ -169,24 +188,55 @@ python scripts/run_step6.py
 ```
 Result: VQI-S OOB error = 0.1824, VQI-V OOB error = 0.1794.
 
+### Step 6b: Dimensionality Reduction Experiments
+Train PCA, ICA, and Factor Analysis variants. Compare 5 DR methods.
+```bash
+python scripts/pca_dimensionality.py
+python scripts/train_pca_models.py
+python scripts/train_ica_models.py
+python scripts/train_fa_models.py
+```
+Result: PCA-90% selected as deployed model (best balanced OOB loss: -0.0263).
+
 ### Step 7: Model Validation
 Validate on 50,000 held-out samples. Compute AUC, CDF shift tests, cross-validation.
 ```bash
+# Full-feature baseline
 python scripts/run_step7.py
+
+# PCA-90% deployed model
+python scripts/run_step7_pca90.py
+python scripts/visualize_step7_pca90.py
 ```
-Result: VQI-S AUC = 0.8719, VQI-V AUC = 0.8812.
+Result (full): VQI-S AUC = 0.8719, VQI-V AUC = 0.8812.
+Result (PCA-90%): VQI-S AUC = 0.8600, VQI-V AUC = 0.8619.
 
 ### Step 8: Evaluation of Predictive Power
 Evaluate on 3 test datasets (VoxCeleb1-test, VCTK, CN-Celeb) using ERC, Ranked DET, cross-system analysis.
 ```bash
+# Full-feature baseline
 python scripts/run_step8.py
+
+# PCA-90% deployed model
+python scripts/run_step8_pca90.py --dataset voxceleb1
+python scripts/run_step8_pca90.py --dataset vctk
+python scripts/run_step8_pca90.py --dataset cnceleb
+python scripts/visualize_step8_pca90.py
 ```
 
 ## Pre-trained Models
 
-Pre-trained Random Forest models are available:
+### Full-Feature Baseline (v1.0)
 - `models/vqi_rf_model.joblib` -- VQI-S model (1000 trees, 430 features, ~192MB)
 - `models/vqi_v_rf_model.joblib` -- VQI-V model (1000 trees, 133 features, ~204MB)
+
+### PCA-90% Deployed Model (v2.0)
+- `models/vqi_pca_scaler_s.joblib` -- VQI-S StandardScaler (12K)
+- `models/vqi_pca_transformer_s.joblib` -- VQI-S PCA, 430→99 components (172K)
+- `models/vqi_rf_pca_model.joblib` -- VQI-S PCA RF classifier (1000 trees, ~212MB)
+- `models/vqi_pca_scaler_v.joblib` -- VQI-V StandardScaler (4K)
+- `models/vqi_pca_transformer_v.joblib` -- VQI-V PCA, 133→47 components (28K)
+- `models/vqi_v_rf_pca_model.joblib` -- VQI-V PCA RF classifier (500 trees, ~97MB)
 
 These files exceed GitHub's 100MB limit. If not tracked via Git LFS, download them from the [Releases](https://github.com/YOUR_USERNAME/VQI/releases) page.
 
@@ -205,9 +255,21 @@ VQI/
 |   |-- providers/          # Speaker verification system wrappers (P1-P5)
 |-- scripts/                # Step execution and visualization scripts
 |-- tests/                  # Unit and integration tests
-|-- models/                 # Pre-trained RF models (.joblib)
+|-- models/                 # Pre-trained RF models (full-feature + PCA-90%)
 |-- data/                   # Split manifests, labels, selected features
+|   |-- training/           # Full-feature VQI-S training metrics
+|   |-- training_v/         # Full-feature VQI-V training metrics
+|   |-- training_pca/       # PCA-90% VQI-S training metrics
+|   |-- training_pca_v/     # PCA-90% VQI-V training metrics
+|   |-- training_pca95/     # PCA-95% VQI-S training metrics
+|   |-- training_ica/       # ICA VQI-S training metrics
+|   |-- training_fa/        # FA VQI-S training metrics
 |-- reports/                # Visualizations and analysis for each step
+|   |-- step7_pca90/        # PCA-90% validation results
+|   |-- step8_pca90/        # PCA-90% VQI-S evaluation results
+|   |-- step8_pca90_v/      # PCA-90% VQI-V evaluation results
+|   |-- step9_v2/           # Software v2.0 conformance results
+|   |-- dimensionality_reduction/  # 5-way DR comparison
 |-- screenshots/            # Desktop application screenshots
 |-- CHANGELOG.md            # Application release history
 |-- DATASETS.md             # Dataset download links and directory structure
@@ -216,7 +278,7 @@ VQI/
 
 ## Results Summary
 
-### Error vs. Reject Curves (ERC)
+### Error vs. Reject Curves (ERC) -- Full-Feature Baseline
 
 Best FNMR reduction at 20% rejection (FNMR=1% operating point):
 
@@ -226,7 +288,15 @@ Best FNMR reduction at 20% rejection (FNMR=1% operating point):
 | VCTK | x-vector | 47.6% | 26.9% |
 | CN-Celeb | ResNet | 11.9% | 5.2% |
 
-### Ranked DET Separation
+### Error vs. Reject Curves (ERC) -- PCA-90% Deployed Model
+
+| Dataset | Best Provider | VQI-S | VQI-V |
+|---------|--------------|-------|-------|
+| VoxCeleb1-test | x-vector | 38.0% (20% rej) | 15.9% (30% rej) |
+| VCTK | ECAPA2 | 38.3% (30% rej) | 24.0% (30% rej) |
+| CN-Celeb | ECAPA2 | 10.9% (30% rej) | 4.1% (30% rej) |
+
+### Ranked DET Separation -- Full-Feature Baseline
 
 EER separation ratio (highest-quality / lowest-quality group):
 
@@ -235,12 +305,30 @@ EER separation ratio (highest-quality / lowest-quality group):
 | VoxCeleb1 | 2.04x | 1.72x | 1.41x | 1.10x | 1.29x |
 | VCTK | 3.27x | 2.62x | 2.21x | 1.88x | 1.41x |
 
+### Ranked DET Separation -- PCA-90% Deployed Model
+
+| Dataset | ResNet | ECAPA | ECAPA2 | x-vector | WavLM |
+|---------|--------|-------|--------|----------|-------|
+| VoxCeleb1 | 1.47x | 1.44x | 1.44x | 1.67x | 1.04x |
+| VCTK | 4.26x | 3.81x | 6.41x | 2.47x | 1.32x |
+| CN-Celeb | 3.72x | 3.02x | 3.20x | 2.07x | 2.06x |
+
+### Dimensionality Reduction Comparison
+
+| Method | VQI-S OOB | VQI-V OOB | Dim Reduction |
+|--------|-----------|-----------|---------------|
+| Full features | 0.8176 | 0.8206 | — |
+| PCA-90% | 0.8036 | 0.8082 | 77% (S), 65% (V) |
+| PCA-95% | 0.8016 | 0.8086 | 63% (S), 47% (V) |
+| Factor Analysis | 0.8086 | 0.7961 | 77% (S), 65% (V) |
+| ICA | 0.7935 | 0.7949 | 77% (S), 65% (V) |
+
 ## Citation
 
 ```bibtex
 @article{vqi2026,
   title={VQI: Voice Quality Index for Speaker Recognition},
-  author={[Author Names]},
+  author={Ajan Ahmed and Masudul H. Imtiaz},
   year={2026}
 }
 ```
