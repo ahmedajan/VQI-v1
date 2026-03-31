@@ -24,31 +24,25 @@ Datasets/
 datasets/
 
 # Large intermediate data (regenerable from code)
-data/embeddings/
-data/features/
-data/provider_scores/
-data/pretrained/
-data/test_scores/
-data/labels/
-data/step8_eval/
-data/cross_analysis/
-data/validation/
-data/validation_v/
-data/validation_pca90/
-data/validation_pca90_v/
-data/step8_eval_pca90/
-data/test_scores_pca90/
+data/step1/
+data/step2/
+data/step3/
+data/step4/
+data/step5/
+data/step7/
+data/step8/
+data/step9/
+data/final_model/
+data/x1_comparison/
+data/x1_regression/
+data/feature_percentiles_*.npz
+data/feature_categories.json
 fisher_values.csv
 
 # Step 9 GUI application files
 conformance/
 vqi/gui/
-vqi/engine.py
-vqi/feedback.py
-vqi_app.spec
 installer/
-data/feature_percentiles_*.npz
-data/feature_categories.json
 
 # Build artifacts
 *.exe
@@ -57,6 +51,9 @@ VQI_Installer/
 # Release binaries (too large for git)
 releases/*.zip
 Releases/*.zip
+
+# XGBoost
+xgboost*.log
 
 # OS files
 .DS_Store

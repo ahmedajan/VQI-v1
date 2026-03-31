@@ -1,3 +1,2 @@
 # Git LFS tracking for large files (>100MB GitHub limit)
-*.joblib filter=lfs diff=lfs merge=lfs -text
 data/splits/train_pool.csv filter=lfs diff=lfs merge=lfs -text

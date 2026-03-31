@@ -20,9 +20,13 @@ speechbrain>=1.0.0
 transformers>=4.30.0
 huggingface-hub>=0.20.0
 
-# Utilities
+# Model frameworks
+xgboost>=2.0.0
 joblib>=1.2.0
+
+# Utilities
 PyYAML>=6.0
+matplotlib>=3.7.0
 
 # Optional (for specific features)
 # onnxruntime>=1.15.0    # DNSMOS quality estimation

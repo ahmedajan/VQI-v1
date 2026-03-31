@@ -9,8 +9,8 @@ import pandas as pd
 import yaml
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-EVAL_DIR = os.path.join(PROJECT_ROOT, "data", "evaluation_v")
-EVAL_S_DIR = os.path.join(PROJECT_ROOT, "data", "evaluation")
+EVAL_DIR = os.path.join(PROJECT_ROOT, "data", "step5", "evaluation_v")
+EVAL_S_DIR = os.path.join(PROJECT_ROOT, "data", "step5", "evaluation")
 REPORTS = os.path.join(PROJECT_ROOT, "reports", "step5")
 
 

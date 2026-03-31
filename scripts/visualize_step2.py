@@ -32,8 +32,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 # Paths
-SCORE_DIR = PROJECT_ROOT / "data" / "provider_scores"
-DATA_DIR = PROJECT_ROOT / "data"
+SCORE_DIR = PROJECT_ROOT / "data" / "step1" / "provider_scores"
+DATA_DIR = PROJECT_ROOT / "data" / "step2"
 REPORT_DIR = PROJECT_ROOT / "reports" / "step2"
 
 THRESHOLDS_YAML = DATA_DIR / "label_thresholds.yaml"

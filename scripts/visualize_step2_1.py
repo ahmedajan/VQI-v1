@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 
 # ---- paths ----
-INPUT_CSV = os.path.join("D:", os.sep, "VQI", "implementation", "data", "labels", "train_pool_durations.csv")
+INPUT_CSV = os.path.join("D:", os.sep, "VQI", "implementation", "data", "step2", "labels", "train_pool_durations.csv")
 REPORT_DIR = os.path.join("D:", os.sep, "VQI", "implementation", "reports", "step2")
 os.makedirs(REPORT_DIR, exist_ok=True)
 

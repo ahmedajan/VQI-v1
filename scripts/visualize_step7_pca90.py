@@ -48,7 +48,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-REPORT_DIR = os.path.join(PROJECT_ROOT, "reports", "step7_pca90")
+REPORT_DIR = os.path.join(PROJECT_ROOT, "reports", "step7", "pca90")
 os.makedirs(REPORT_DIR, exist_ok=True)
 
 plt.rcParams.update({
@@ -80,9 +80,9 @@ PROVIDER_LABELS = {
 def load_validation_data(score_type):
     """Load all validation outputs for a score type (PCA-90%)."""
     suffix = "_v" if score_type == "v" else ""
-    val_dir = os.path.join(PROJECT_ROOT, "data", f"validation_pca90{suffix}")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "pca90", f"validation_pca90{suffix}")
     # Training PCA dir: training_pca/ for S, training_pca_v/ for V
-    train_dir = os.path.join(PROJECT_ROOT, "data", f"training_pca{suffix}")
+    train_dir = os.path.join(PROJECT_ROOT, "data", "step6", "dimensionality_reduction", f"training_pca{suffix}")
 
     results_csv = os.path.join(val_dir, f"validation_results{suffix}.csv")
     df = pd.read_csv(results_csv)
@@ -171,7 +171,7 @@ def plot_score_distribution(data, prefix):
 
     ax.set_xlabel(f"VQI-{data['score_type'].upper()} Score")
     ax.set_ylabel("Count")
-    ax.set_title(f"VQI-{data['score_type'].upper()} Score Distribution (PCA-90%) (N={len(scores):,})")
+    # Title removed — provided by LaTeX caption
     ax.set_xlim(0, 100)
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{int(x):,}"))
 
@@ -248,11 +248,7 @@ def plot_confusion_matrix(data, prefix):
             ax.text(j, i, f"{cm[i, j]:,}", ha="center", va="center",
                     fontsize=14, fontweight="bold", color=color)
 
-    title = (f"VQI-{data['score_type'].upper()} Confusion Matrix (PCA-90%) (threshold=50)\n"
-             f"Acc={metrics['accuracy']:.4f}  Prec={metrics['precision']:.4f}  "
-             f"Rec={metrics['recall']:.4f}  F1={metrics['f1_score']:.4f}  "
-             f"AUC={metrics['auc_roc']:.4f}")
-    ax.set_title(title, fontsize=9)
+    # Title removed — provided by LaTeX caption
     fig.colorbar(im, ax=ax, shrink=0.8)
 
     path = os.path.join(REPORT_DIR, f"7_pca90_{prefix}_confusion_matrix.png")
@@ -306,7 +302,7 @@ def plot_roc_curve(data, prefix):
 
     ax.set_xlabel("False Positive Rate")
     ax.set_ylabel("True Positive Rate")
-    ax.set_title(f"VQI-{data['score_type'].upper()} ROC Curve (PCA-90%)")
+    # Title removed — provided by LaTeX caption
     ax.legend(loc="lower right")
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
@@ -366,7 +362,7 @@ def plot_score_vs_genuine(data, prefix):
 
 def plot_dual_score_scatter():
     """Plot 9: 2D scatter VQI-S vs VQI-V colored by class."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation_pca90")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "pca90", "validation_pca90")
     dual_csv = os.path.join(val_dir, "dual_score_data.csv")
     thresh_path = os.path.join(val_dir, "dual_score_thresholds.yaml")
 
@@ -390,11 +386,11 @@ def plot_dual_score_scatter():
     excl = ~labeled
 
     ax.scatter(df.loc[excl, "vqi_s_score"], df.loc[excl, "vqi_v_score"],
-               alpha=0.02, s=2, color="#94a3b8", label=f"Excluded (N={excl.sum():,})", rasterized=True)
+               alpha=0.15, s=3, color="#64748b", label=f"Excluded (N={excl.sum():,})", rasterized=True)
     ax.scatter(df.loc[c1, "vqi_s_score"], df.loc[c1, "vqi_v_score"],
-               alpha=0.15, s=4, color="#2563eb", label=f"Class 1 (N={c1.sum():,})", rasterized=True)
+               alpha=0.6, s=6, color="#1d4ed8", label=f"Class 1 (N={c1.sum():,})", rasterized=True)
     ax.scatter(df.loc[c0, "vqi_s_score"], df.loc[c0, "vqi_v_score"],
-               alpha=0.3, s=6, color="#dc2626", label=f"Class 0 (N={c0.sum():,})", rasterized=True)
+               alpha=0.8, s=8, color="#b91c1c", label=f"Class 0 (N={c0.sum():,})", rasterized=True)
 
     # Quadrant lines
     ax.axvline(x=ts, color="black", linestyle="--", linewidth=1, alpha=0.5)
@@ -413,7 +409,7 @@ def plot_dual_score_scatter():
 
     ax.set_xlabel("VQI-S (Signal Quality)")
     ax.set_ylabel("VQI-V (Voice Distinctiveness)")
-    ax.set_title(f"Dual-Score Analysis (PCA-90%): VQI-S vs VQI-V (threshold S={ts}, V={tv})")
+    # Title removed — provided by LaTeX caption
     ax.legend(loc="upper left", fontsize=8, markerscale=3)
     ax.set_xlim(-2, 102)
     ax.set_ylim(-2, 102)
@@ -428,7 +424,7 @@ def plot_dual_score_scatter():
 
 def plot_quadrant_bar_chart():
     """Plot 10: Per-quadrant Class 1 rate bar chart."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation_pca90")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "pca90", "validation_pca90")
     quad_csv = os.path.join(val_dir, "quadrant_analysis.csv")
 
     if not os.path.exists(quad_csv):
@@ -476,7 +472,7 @@ def plot_quadrant_bar_chart():
 
 def plot_combined_rejection_curve():
     """Plot 11: Combined rejection curve — S-only vs V-only vs union vs intersection."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation_pca90")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "pca90", "validation_pca90")
     dual_csv = os.path.join(val_dir, "dual_score_data.csv")
 
     if not os.path.exists(dual_csv):
@@ -663,8 +659,8 @@ def generate_validation_report(data, prefix, report_dir):
 
 def generate_analysis_md():
     """Generate analysis.md combining all findings (PCA-90%)."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation_pca90")
-    val_v_dir = os.path.join(PROJECT_ROOT, "data", "validation_pca90_v")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "pca90", "validation_pca90")
+    val_v_dir = os.path.join(PROJECT_ROOT, "data", "step7", "pca90", "validation_pca90_v")
 
     # Load metrics
     s_metrics = {}
@@ -1133,7 +1129,7 @@ def plot_forest_plot(data, prefix):
 
 def plot_dual_score_hexbin():
     """Hexbin: VQI-S vs VQI-V colored by density."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation_pca90")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "pca90", "validation_pca90")
     dual_csv = os.path.join(val_dir, "dual_score_data.csv")
 
     if not os.path.exists(dual_csv):
@@ -1161,7 +1157,7 @@ def plot_dual_score_hexbin():
 
 def plot_dual_quadrant_table():
     """Render quadrant_analysis.csv as a matplotlib table image."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation_pca90")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "pca90", "validation_pca90")
     quad_csv = os.path.join(val_dir, "quadrant_analysis.csv")
 
     if not os.path.exists(quad_csv):
@@ -1222,7 +1218,7 @@ def plot_dual_quadrant_table():
 
 def plot_dual_quadrant_genuine_violin():
     """4-panel violin: genuine score distributions per quadrant for P1."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation_pca90")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "pca90", "validation_pca90")
     dual_csv = os.path.join(val_dir, "dual_score_data.csv")
     thresh_path = os.path.join(val_dir, "dual_score_thresholds.yaml")
 
@@ -1278,8 +1274,8 @@ def plot_dual_quadrant_genuine_violin():
 
 def generate_analysis_v_md():
     """Generate 7_analysis_v.md with VQI-V + dual-score findings (PCA-90%)."""
-    val_v_dir = os.path.join(PROJECT_ROOT, "data", "validation_pca90_v")
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation_pca90")
+    val_v_dir = os.path.join(PROJECT_ROOT, "data", "step7", "pca90", "validation_pca90_v")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "pca90", "validation_pca90")
 
     # Load V metrics
     v_metrics = {}
@@ -1290,7 +1286,7 @@ def generate_analysis_v_md():
 
     # Load V training metrics
     v_train = {}
-    v_train_yaml = os.path.join(PROJECT_ROOT, "data", "training_pca_v", "training_metrics.yaml")
+    v_train_yaml = os.path.join(PROJECT_ROOT, "data", "step6", "dimensionality_reduction", "training_pca_v", "training_metrics.yaml")
     if os.path.exists(v_train_yaml):
         with open(v_train_yaml, "r", encoding="utf-8") as f:
             v_train = yaml.safe_load(f)

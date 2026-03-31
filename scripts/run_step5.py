@@ -128,13 +128,13 @@ def main():
 
     # Paths
     data_dir = os.path.join(PROJECT_ROOT, "data")
-    features_dir = os.path.join(data_dir, "features")
-    eval_s_dir = os.path.join(data_dir, "evaluation")
-    eval_v_dir = os.path.join(data_dir, "evaluation_v")
+    features_dir = os.path.join(data_dir, "step4", "features")
+    eval_s_dir = os.path.join(data_dir, "step5", "evaluation")
+    eval_v_dir = os.path.join(data_dir, "step5", "evaluation_v")
     checkpoint_path = os.path.join(eval_s_dir, "_checkpoint_step5.yaml")
 
-    training_csv = os.path.join(data_dir, "training_set_final.csv")
-    fisher_csv = os.path.join(data_dir, "fisher_values.csv")
+    training_csv = os.path.join(data_dir, "step2", "training_set_final.csv")
+    fisher_csv = os.path.join(data_dir, "step2", "fisher_values.csv")
 
     os.makedirs(eval_s_dir, exist_ok=True)
     os.makedirs(eval_v_dir, exist_ok=True)

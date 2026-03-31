@@ -281,17 +281,17 @@ def main():
 
     # Paths
     data_dir = os.path.join(PROJECT_ROOT, "data")
-    features_dir = os.path.join(data_dir, "features")
-    embeddings_dir = os.path.join(data_dir, "embeddings")
-    scores_dir = os.path.join(data_dir, "provider_scores")
+    features_dir = os.path.join(data_dir, "step4", "features")
+    embeddings_dir = os.path.join(data_dir, "step1", "embeddings")
+    scores_dir = os.path.join(data_dir, "step1", "provider_scores")
     scripts_dir = os.path.join(PROJECT_ROOT, "scripts")
 
-    validation_csv = os.path.join(data_dir, "validation_set.csv")
-    thresholds_yaml = os.path.join(data_dir, "label_thresholds.yaml")
+    validation_csv = os.path.join(data_dir, "step2", "validation_set.csv")
+    thresholds_yaml = os.path.join(data_dir, "step2", "label_thresholds.yaml")
 
     # Output dirs
-    val_s_dir = os.path.join(data_dir, "validation")
-    val_v_dir = os.path.join(data_dir, "validation_v")
+    val_s_dir = os.path.join(data_dir, "step7", "full_feature", "validation")
+    val_v_dir = os.path.join(data_dir, "step7", "full_feature", "validation_v")
     os.makedirs(val_s_dir, exist_ok=True)
     os.makedirs(val_v_dir, exist_ok=True)
 
@@ -335,9 +335,9 @@ def main():
             validation_csv=validation_csv,
             features_npy=os.path.join(features_dir, "features_s_val.npy"),
             feature_names_json=os.path.join(features_dir, "feature_names_s.json"),
-            selected_features_txt=os.path.join(data_dir, "evaluation", "selected_features.txt"),
+            selected_features_txt=os.path.join(data_dir, "step5", "evaluation", "selected_features.txt"),
             model_path=os.path.join(PROJECT_ROOT, "models", "vqi_rf_model.joblib"),
-            training_dir=os.path.join(data_dir, "training"),
+            training_dir=os.path.join(data_dir, "step6", "full_feature", "training"),
             provider_scores_dir=scores_dir,
             thresholds_yaml=thresholds_yaml,
             output_dir=val_s_dir,
@@ -371,9 +371,9 @@ def main():
             validation_csv=validation_csv,
             features_npy=os.path.join(features_dir, "features_v_val.npy"),
             feature_names_json=os.path.join(features_dir, "feature_names_v.json"),
-            selected_features_txt=os.path.join(data_dir, "evaluation_v", "selected_features.txt"),
+            selected_features_txt=os.path.join(data_dir, "step5", "evaluation_v", "selected_features.txt"),
             model_path=os.path.join(PROJECT_ROOT, "models", "vqi_v_rf_model.joblib"),
-            training_dir=os.path.join(data_dir, "training_v"),
+            training_dir=os.path.join(data_dir, "step6", "full_feature", "training_v"),
             provider_scores_dir=scores_dir,
             thresholds_yaml=thresholds_yaml,
             output_dir=val_v_dir,

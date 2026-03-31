@@ -12,7 +12,7 @@ import torchaudio
 
 from .base import SpeakerProvider
 
-SAVEDIR = "implementation/data/pretrained/p1_ecapa"
+SAVEDIR = "implementation/data/step1/pretrained/p1_ecapa"
 
 
 class P1_ECAPA(SpeakerProvider):

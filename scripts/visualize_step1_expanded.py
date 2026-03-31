@@ -29,9 +29,9 @@ import random
 # -- Paths ----------------------------------------------------------------
 BASE = Path(r"D:\VQI")
 INVENTORY_CSV = BASE / "blueprint" / "dataset_inventory.csv"
-SPLITS_DIR = BASE / "implementation" / "data" / "splits"
-COHORT_DIR = BASE / "implementation" / "data" / "snorm_cohort"
-EMBED_DIR = BASE / "implementation" / "data" / "embeddings"
+SPLITS_DIR = BASE / "implementation" / "data" / "step1" / "splits"
+COHORT_DIR = BASE / "implementation" / "data" / "step1" / "snorm_cohort"
+EMBED_DIR = BASE / "implementation" / "data" / "step1" / "embeddings"
 REPORT_BASE = BASE / "implementation" / "reports" / "step1"
 
 PROVIDERS_ALL = [

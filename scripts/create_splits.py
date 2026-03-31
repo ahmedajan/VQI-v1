@@ -20,8 +20,8 @@ from pathlib import Path
 # ── Paths ──────────────────────────────────────────────────────────────────
 BASE = Path(r"D:\VQI")
 DATASETS = BASE / "Datasets"
-SPLITS_DIR = BASE / "implementation" / "data" / "splits"
-TEST_SPEAKERS_FILE = BASE / "implementation" / "data" / "voxceleb1_test_speakers.txt"
+SPLITS_DIR = BASE / "implementation" / "data" / "step1" / "splits"
+TEST_SPEAKERS_FILE = BASE / "implementation" / "data" / "step1" / "voxceleb1_test_speakers.txt"
 
 SPLITS_DIR.mkdir(parents=True, exist_ok=True)
 

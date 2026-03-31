@@ -5,7 +5,7 @@ Step 2.1 — Compute Per-Sample Prerequisite Indicators (Speech Duration after V
 Reads the training pool manifest (1,210,451 samples), loads each audio file,
 runs energy-based VAD, and records speech duration for label selection.
 
-Output: implementation/data/labels/train_pool_durations.csv
+Output: implementation/data/step2/labels/train_pool_durations.csv
 Columns: row_idx, filename, speaker_id, dataset_source,
          total_duration_sec, speech_duration_sec, speech_ratio,
          n_frames, n_speech_frames
@@ -38,8 +38,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ---- constants ----
-TRAIN_POOL_CSV = os.path.join("D:", os.sep, "VQI", "implementation", "data", "splits", "train_pool.csv")
-OUTPUT_DIR = os.path.join("D:", os.sep, "VQI", "implementation", "data", "labels")
+TRAIN_POOL_CSV = os.path.join("D:", os.sep, "VQI", "implementation", "data", "step1", "splits", "train_pool.csv")
+OUTPUT_DIR = os.path.join("D:", os.sep, "VQI", "implementation", "data", "step2", "labels")
 OUTPUT_CSV = os.path.join(OUTPUT_DIR, "train_pool_durations.csv")
 PARTIAL_CSV = os.path.join(OUTPUT_DIR, "train_pool_durations_partial.csv")
 CHECKPOINT_FILE = os.path.join(OUTPUT_DIR, "_checkpoint_durations.pkl")

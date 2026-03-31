@@ -1,0 +1,10 @@
+substep,description,status,key_metric,errors
+1.1,Dataset Verification,COMPLETE,8/8 datasets present,0
+1.2,Inventory Script,COMPLETE,"1,585,705 total utterances",0
+1.2a,VoxCeleb2 Conversion,COMPLETE,"1,128,246 M4A->WAV",0
+1.3,VoxCeleb1-test Split,COMPLETE,"40 speakers, 4,874 utterances",0
+1.4,Train/Val/Test Splits,COMPLETE,"1,441,871 total files, 0 overlap",0
+1.5,Provider Setup,COMPLETE,5/5 providers pass verification,0
+1.7,S-Norm Cohort,COMPLETE,"1,000 speakers, all norms=1.0",0
+1.6a,Embedding Extraction,COMPLETE,"1,210,451 x 3 providers, 0 NaN/Inf",0
+1.6b,Score Computation,COMPLETE,d' > 3.9 all providers,0

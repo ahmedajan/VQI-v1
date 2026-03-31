@@ -4,8 +4,9 @@ ICA-Reduced Random Forest Model Training & Analysis
 Trains RF models on ICA-reduced features and compares OOB accuracy
 against full-feature baselines.
 
-ICA settings: n_components matches PCA-90% for fair comparison:
-  VQI-S: 99 ICs,  VQI-V: 47 ICs
+ICA component count selected via Parallel Analysis (Horn's method):
+retain components whose eigenvalues exceed the 95th percentile of
+eigenvalues from column-permuted random data (100 permutations).
 
 Usage:
     python train_ica_models.py
@@ -24,7 +25,7 @@ import numpy as np
 import pandas as pd
 import yaml
 from scipy import stats
-from sklearn.decomposition import FastICA
+from sklearn.decomposition import FastICA, PCA
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import cross_val_score
@@ -53,8 +54,10 @@ FIXED_PARAMS = dict(
 N_ESTIMATORS_GRID = [200, 300, 400, 500, 750, 1000]
 MAX_FEATURES_GRID = [5, 8, 10, 12, "sqrt"]
 
-# ICA components (same as PCA-90% for fair comparison)
-ICA_COMPONENTS = {"s": 99, "v": 47}
+# Parallel Analysis config
+PA_N_PERMUTATIONS = 100
+PA_PERCENTILE = 95
+PA_RANDOM_STATE = 42
 
 # Original baselines
 BASELINES = {
@@ -74,6 +77,9 @@ BASELINES = {
     },
 }
 
+# Old PCA-90%-matched values (for reference in plots)
+OLD_COMPONENTS = {"s": 99, "v": 47}
+
 
 def setup_logging():
     logging.basicConfig(
@@ -85,30 +91,94 @@ def setup_logging():
 
 
 def load_data(score_type):
-    """Load X_train, y_train from data/training/ or data/training_v/."""
+    """Load X_train, y_train from data/step6/full_feature/training/ or training_v/."""
     if score_type == "s":
-        data_dir = os.path.join(PROJECT_ROOT, "data", "training")
+        data_dir = os.path.join(PROJECT_ROOT, "data", "step6", "full_feature", "training")
     else:
-        data_dir = os.path.join(PROJECT_ROOT, "data", "training_v")
+        data_dir = os.path.join(PROJECT_ROOT, "data", "step6", "full_feature", "training_v")
 
     X = np.load(os.path.join(data_dir, "X_train.npy"))
     y = np.load(os.path.join(data_dir, "y_train.npy"))
     return X, y
 
 
-def apply_ica(X, n_components):
-    """StandardScaler -> FastICA(n_components) -> return (X_ica, ica_obj, scaler_obj)."""
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+# ---------------------------------------------------------------------------
+# Parallel Analysis (Horn's method)
+# ---------------------------------------------------------------------------
 
-    ica = FastICA(n_components=n_components, random_state=42, max_iter=1000)
-    X_ica = ica.fit_transform(X_scaled)
+def parallel_analysis(X_scaled, score_type):
+    """Horn's Parallel Analysis: retain components where real eigenvalue > 95th percentile of random.
 
-    logging.info(
-        "ICA: %d features -> %d ICs (n_iter=%d)",
-        X.shape[1], n_components, ica.n_iter_,
-    )
-    return X_ica, ica, scaler
+    Returns (n_components, real_eigenvalues, random_thresholds).
+    """
+    logger = logging.getLogger("parallel_analysis")
+    N, p = X_scaled.shape
+    rng = np.random.RandomState(PA_RANDOM_STATE)
+
+    # Real eigenvalues from PCA on actual data
+    pca = PCA(n_components=p)
+    pca.fit(X_scaled)
+    real_eigenvalues = pca.explained_variance_
+
+    # Permutation eigenvalues
+    logger.info("Running %d permutations for PA (p=%d)...", PA_N_PERMUTATIONS, p)
+    random_eigenvalues = np.zeros((PA_N_PERMUTATIONS, p))
+    for i in range(PA_N_PERMUTATIONS):
+        X_perm = X_scaled.copy()
+        for col in range(p):
+            rng.shuffle(X_perm[:, col])
+        pca_perm = PCA(n_components=p)
+        pca_perm.fit(X_perm)
+        random_eigenvalues[i] = pca_perm.explained_variance_
+        if (i + 1) % 20 == 0:
+            logger.info("  Permutation %d/%d done", i + 1, PA_N_PERMUTATIONS)
+
+    # 95th percentile threshold for each component
+    random_thresholds = np.percentile(random_eigenvalues, PA_PERCENTILE, axis=0)
+
+    # Count components where real > threshold
+    n_components = int(np.sum(real_eigenvalues > random_thresholds))
+    logger.info("PA result: %d components retained (real > %dth percentile of random)",
+                n_components, PA_PERCENTILE)
+
+    return n_components, real_eigenvalues, random_thresholds
+
+
+def plot_parallel_analysis(real_eigenvalues, random_thresholds, n_components, score_type, reports_dir):
+    """Scree plot with real eigenvalues, random threshold, shaded retained region."""
+    old_n = OLD_COMPONENTS[score_type]
+    n_show = min(len(real_eigenvalues), max(n_components + 20, 80))
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    x = np.arange(1, n_show + 1)
+
+    ax.plot(x, real_eigenvalues[:n_show], "o-", color="steelblue", markersize=3,
+            label="Real eigenvalues", linewidth=1.5)
+    ax.plot(x, random_thresholds[:n_show], "s-", color="red", markersize=2,
+            label=f"Random {PA_PERCENTILE}th percentile", linewidth=1.2, alpha=0.8)
+
+    # Shade retained region
+    ax.axvspan(0.5, n_components + 0.5, alpha=0.1, color="green", label=f"Retained: {n_components} ICs")
+
+    # Mark crossover
+    if n_components < n_show:
+        ax.axvline(x=n_components + 0.5, color="green", linestyle="--", alpha=0.6)
+
+    # Mark old value
+    ax.axvline(x=old_n, color="gray", linestyle=":", alpha=0.5,
+               label=f"Old PCA-90% match: {old_n}")
+
+    ax.set_xlabel("Component Number")
+    ax.set_ylabel("Eigenvalue")
+    ax.set_title(f"Parallel Analysis (Horn's Method) -- VQI-{score_type.upper()}")
+    ax.legend(fontsize=8)
+    ax.set_xlim(0.5, n_show + 0.5)
+    plt.tight_layout()
+
+    path = os.path.join(reports_dir, f"ica_parallel_analysis_{score_type}.png")
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    logging.info("Saved parallel analysis plot -> %s", path)
 
 
 def grid_search(X, y, output_dir):
@@ -184,7 +254,7 @@ def grid_search(X, y, output_dir):
     return best_params
 
 
-def train_final(X, y, best_params, output_dir, model_path):
+def train_final(X, y, best_params, output_dir, model_path, n_components, selection_method):
     """Train final RF with best params, compute OOB + confusion matrix + precision/recall."""
     logger = logging.getLogger("train_final")
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
@@ -218,6 +288,8 @@ def train_final(X, y, best_params, output_dir, model_path):
         "training_accuracy": round(float(train_acc), 6),
         "n_samples": int(len(y)),
         "n_features": int(X.shape[1]),
+        "n_components": int(n_components),
+        "component_selection_method": selection_method,
         "n_class_0": int(np.sum(y == 0)),
         "n_class_1": int(np.sum(y == 1)),
         "confusion_matrix": cm.tolist(),
@@ -240,7 +312,7 @@ def train_final(X, y, best_params, output_dir, model_path):
 # ---------------------------------------------------------------------------
 
 def plot_kurtosis_distribution(X_ica, score_type, reports_dir):
-    """Plot kurtosis of each IC — ICA maximizes non-Gaussianity."""
+    """Plot kurtosis of each IC -- ICA maximizes non-Gaussianity."""
     kurtosis_vals = stats.kurtosis(X_ica, axis=0, fisher=True)
 
     fig, ax = plt.subplots(figsize=(10, 5))
@@ -249,7 +321,7 @@ def plot_kurtosis_distribution(X_ica, score_type, reports_dir):
     ax.axhline(y=0, color="red", linestyle="--", alpha=0.5, label="Gaussian (kurtosis=0)")
     ax.set_xlabel("Independent Component (sorted by kurtosis)")
     ax.set_ylabel("Excess Kurtosis")
-    ax.set_title(f"ICA Component Kurtosis Distribution — VQI-{score_type.upper()} ({len(kurtosis_vals)} ICs)")
+    ax.set_title(f"ICA Component Kurtosis Distribution -- VQI-{score_type.upper()} ({len(kurtosis_vals)} ICs)")
     ax.legend()
     plt.tight_layout()
 
@@ -287,7 +359,7 @@ def plot_mixing_matrix_heatmap(ica_obj, score_type, reports_dir, n_show=20):
     ax.set_xticklabels([f"IC{i}" for i in top_ics], rotation=45, ha="right", fontsize=7)
     ax.set_yticks(range(n_show))
     ax.set_yticklabels([f"F{i}" for i in top_feats], fontsize=7)
-    ax.set_title(f"ICA Mixing Matrix (Top {n_show} ICs x Top {n_show} Features) — VQI-{score_type.upper()}")
+    ax.set_title(f"ICA Mixing Matrix (Top {n_show} ICs x Top {n_show} Features) -- VQI-{score_type.upper()}")
     fig.colorbar(im, ax=ax, shrink=0.8)
     plt.tight_layout()
 
@@ -297,33 +369,43 @@ def plot_mixing_matrix_heatmap(ica_obj, score_type, reports_dir, n_show=20):
     logging.info("Saved mixing matrix heatmap -> %s", path)
 
 
-def write_analysis(reports_dir, all_metrics, all_kurtosis, all_ica_objs):
+def write_analysis(reports_dir, all_metrics, all_kurtosis, all_ica_objs, all_pa_data):
     """Write analysis.md summarizing ICA results."""
     lines = [
-        "# ICA Dimensionality Reduction — Analysis",
+        "# ICA Dimensionality Reduction -- Analysis",
         "",
-        f"**Date:** 2026-02-22",
-        "**Method:** StandardScaler -> FastICA -> RF grid search (same 30-config grid)",
-        f"**Components:** VQI-S = {ICA_COMPONENTS['s']} ICs, VQI-V = {ICA_COMPONENTS['v']} ICs "
-        "(matching PCA-90% for fair comparison)",
+        "**Date:** 2026-03-05",
+        "**Method:** StandardScaler -> Parallel Analysis -> FastICA(PA-optimal n) -> RF grid search (same 30-config grid)",
         "",
+        "## Component Selection (Parallel Analysis -- Horn's Method)",
+        "",
+        f"- **Permutations:** {PA_N_PERMUTATIONS}",
+        f"- **Threshold:** {PA_PERCENTILE}th percentile of random eigenvalues",
+        f"- **Random state:** {PA_RANDOM_STATE}",
+        "",
+    ]
+
+    for st in ["s", "v"]:
+        n_pa, real_eig, rand_thresh = all_pa_data[st]
+        old_n = OLD_COMPONENTS[st]
+        # Find crossover eigenvalue
+        crossover_real = real_eig[n_pa - 1] if n_pa > 0 else 0
+        crossover_rand = rand_thresh[n_pa - 1] if n_pa > 0 else 0
+        lines.append(f"### VQI-{st.upper()}")
+        lines.append("")
+        lines.append(f"- **PA-optimal components:** {n_pa}")
+        lines.append(f"- **Previous (PCA-90% match):** {old_n}")
+        lines.append(f"- **Change:** {n_pa - old_n:+d} components")
+        lines.append(f"- **Last retained eigenvalue:** {crossover_real:.4f} (threshold: {crossover_rand:.4f})")
+        lines.append("")
+
+    lines.extend([
         "## Results Summary",
         "",
         "| Metric | VQI-S Full | VQI-S ICA | VQI-V Full | VQI-V ICA |",
         "|--------|-----------|----------|-----------|----------|",
-    ]
+    ])
 
-    for st in ["s", "v"]:
-        b = BASELINES[st]
-        m = all_metrics[st]
-        diff = m["oob_accuracy"] - b["oob_accuracy"]
-
-        if st == "s":
-            lines[-1] = lines[-1]  # already have header
-        else:
-            pass  # rows added inline
-
-    # Build the table rows
     ms = all_metrics["s"]
     mv = all_metrics["v"]
     bs = BASELINES["s"]
@@ -333,12 +415,12 @@ def write_analysis(reports_dir, all_metrics, all_kurtosis, all_ica_objs):
     lines.append(f"| Best n_estimators | {bs['n_estimators']} | {ms['n_estimators']} | {bv['n_estimators']} | {mv['n_estimators']} |")
     lines.append(f"| Best max_features | {bs['max_features']} | {ms['max_features']} | {bv['max_features']} | {mv['max_features']} |")
     lines.append(f"| OOB accuracy | {bs['oob_accuracy']:.4f} | {ms['oob_accuracy']:.4f} | {bv['oob_accuracy']:.4f} | {mv['oob_accuracy']:.4f} |")
-    lines.append(f"| OOB diff vs full | — | {ms['oob_accuracy'] - bs['oob_accuracy']:+.4f} | — | {mv['oob_accuracy'] - bv['oob_accuracy']:+.4f} |")
+    lines.append(f"| OOB diff vs full | -- | {ms['oob_accuracy'] - bs['oob_accuracy']:+.4f} | -- | {mv['oob_accuracy'] - bv['oob_accuracy']:+.4f} |")
     lines.append(f"| Training accuracy | {bs['training_accuracy']:.4f} | {ms['training_accuracy']:.4f} | {bv['training_accuracy']:.4f} | {mv['training_accuracy']:.4f} |")
-    lines.append(f"| Precision (Class 0) | — | {ms['precision_0']:.4f} | — | {mv['precision_0']:.4f} |")
-    lines.append(f"| Recall (Class 0) | — | {ms['recall_0']:.4f} | — | {mv['recall_0']:.4f} |")
-    lines.append(f"| Precision (Class 1) | — | {ms['precision_1']:.4f} | — | {mv['precision_1']:.4f} |")
-    lines.append(f"| Recall (Class 1) | — | {ms['recall_1']:.4f} | — | {mv['recall_1']:.4f} |")
+    lines.append(f"| Precision (Class 0) | -- | {ms['precision_0']:.4f} | -- | {mv['precision_0']:.4f} |")
+    lines.append(f"| Recall (Class 0) | -- | {ms['recall_0']:.4f} | -- | {mv['recall_0']:.4f} |")
+    lines.append(f"| Precision (Class 1) | -- | {ms['precision_1']:.4f} | -- | {mv['precision_1']:.4f} |")
+    lines.append(f"| Recall (Class 1) | -- | {ms['recall_1']:.4f} | -- | {mv['recall_1']:.4f} |")
 
     lines.append("")
     lines.append("## ICA Component Statistics")
@@ -347,7 +429,8 @@ def write_analysis(reports_dir, all_metrics, all_kurtosis, all_ica_objs):
     for st in ["s", "v"]:
         k = all_kurtosis[st]
         ica_obj = all_ica_objs[st]
-        lines.append(f"### VQI-{st.upper()} ({ICA_COMPONENTS[st]} ICs)")
+        n_pa = all_pa_data[st][0]
+        lines.append(f"### VQI-{st.upper()} ({n_pa} ICs, PA-selected)")
         lines.append("")
         lines.append(f"- **Convergence iterations:** {ica_obj.n_iter_}")
         lines.append(f"- **Kurtosis range:** [{np.min(k):.2f}, {np.max(k):.2f}]")
@@ -362,8 +445,14 @@ def write_analysis(reports_dir, all_metrics, all_kurtosis, all_ica_objs):
         "",
         "ICA (Independent Component Analysis) seeks statistically independent components by ",
         "maximizing non-Gaussianity, unlike PCA which maximizes variance. The kurtosis values ",
-        "above indicate how non-Gaussian each component is — higher absolute kurtosis means ",
+        "above indicate how non-Gaussian each component is -- higher absolute kurtosis means ",
         "more non-Gaussian and potentially more informative for separating classes.",
+        "",
+        "Parallel Analysis (Horn's method) determines the number of components by comparing ",
+        "real eigenvalues against those from column-permuted random data. Components are retained ",
+        "only if their eigenvalue exceeds the 95th percentile of the random distribution, ensuring ",
+        "they capture more structure than noise. This replaces the previous approach of matching ",
+        "PCA-90%'s component count.",
         "",
         "The mixing matrix heatmaps show how original features contribute to the independent ",
         "components, revealing which features form natural independent groupings.",
@@ -380,14 +469,16 @@ def write_analysis(reports_dir, all_metrics, all_kurtosis, all_ica_objs):
         "| `models/vqi_ica_transformer_v.joblib` | VQI-V ICA transformer |",
         "| `data/training_ica/training_metrics.yaml` | VQI-S training metrics |",
         "| `data/training_ica_v/training_metrics.yaml` | VQI-V training metrics |",
-        "| `reports/ica/kurtosis_distribution_s.png` | VQI-S kurtosis plot |",
-        "| `reports/ica/kurtosis_distribution_v.png` | VQI-V kurtosis plot |",
-        "| `reports/ica/mixing_matrix_heatmap_s.png` | VQI-S mixing matrix |",
-        "| `reports/ica/mixing_matrix_heatmap_v.png` | VQI-V mixing matrix |",
-        "| `reports/ica/analysis.md` | This file |",
+        "| `reports/ica_parallel_analysis_s.png` | VQI-S parallel analysis plot |",
+        "| `reports/ica_parallel_analysis_v.png` | VQI-V parallel analysis plot |",
+        "| `reports/kurtosis_distribution_s.png` | VQI-S kurtosis plot |",
+        "| `reports/kurtosis_distribution_v.png` | VQI-V kurtosis plot |",
+        "| `reports/mixing_matrix_heatmap_s.png` | VQI-S mixing matrix |",
+        "| `reports/mixing_matrix_heatmap_v.png` | VQI-V mixing matrix |",
+        "| `reports/analysis.md` | This file |",
     ])
 
-    path = os.path.join(reports_dir, "analysis.md")
+    path = os.path.join(reports_dir, "ica_analysis.md")
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
     logging.info("Analysis report written to %s", path)
@@ -403,25 +494,25 @@ def main():
     t0 = time.time()
 
     models_dir = os.path.join(PROJECT_ROOT, "models")
-    reports_dir = os.path.join(PROJECT_ROOT, "reports", "ica")
+    reports_dir = os.path.join(PROJECT_ROOT, "reports", "step6", "dimensionality_reduction")
     os.makedirs(models_dir, exist_ok=True)
     os.makedirs(reports_dir, exist_ok=True)
 
     all_metrics = {}
     all_kurtosis = {}
     all_ica_objs = {}
+    all_pa_data = {}
 
     for score_type in ["s", "v"]:
         prefix = f"VQI-{score_type.upper()}"
-        n_ics = ICA_COMPONENTS[score_type]
         suffix = "_v" if score_type == "v" else ""
 
         logger.info("=" * 60)
-        logger.info("Starting %s ICA pipeline (%d ICs)", prefix, n_ics)
+        logger.info("Starting %s ICA pipeline (Parallel Analysis component selection)", prefix)
         logger.info("=" * 60)
 
         # Output paths
-        data_dir = os.path.join(PROJECT_ROOT, "data", f"training_ica{suffix}")
+        data_dir = os.path.join(PROJECT_ROOT, "data", "step6", "dimensionality_reduction", f"training_ica{suffix}")
         model_path = os.path.join(models_dir, f"vqi{suffix}_rf_ica_model.joblib")
         scaler_path = os.path.join(models_dir, f"vqi_ica_scaler_{score_type}.joblib")
         ica_path = os.path.join(models_dir, f"vqi_ica_transformer_{score_type}.joblib")
@@ -431,32 +522,48 @@ def main():
         X, y = load_data(score_type)
         logger.info("[%s] Loaded: X=%s, y=%s", prefix, X.shape, y.shape)
 
-        # 2. Apply ICA
-        logger.info("[%s] Applying ICA (%d components)...", prefix, n_ics)
-        X_ica, ica_obj, scaler_obj = apply_ica(X, n_ics)
-        logger.info("[%s] ICA result: %s", prefix, X_ica.shape)
+        # 2. Scale (shared between PA and ICA)
+        logger.info("[%s] Applying StandardScaler...", prefix)
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+
+        # 3. Parallel Analysis
+        logger.info("[%s] Running Parallel Analysis for component selection...", prefix)
+        n_pa, real_eigenvalues, random_thresholds = parallel_analysis(X_scaled, score_type)
+        all_pa_data[score_type] = (n_pa, real_eigenvalues, random_thresholds)
+        logger.info("[%s] PA-optimal components: %d (was %d)", prefix, n_pa, OLD_COMPONENTS[score_type])
+
+        # 4. Plot parallel analysis
+        plot_parallel_analysis(real_eigenvalues, random_thresholds, n_pa, score_type, reports_dir)
+
+        # 5. Apply ICA with PA-optimal n
+        logger.info("[%s] Applying FastICA (%d components, PA-selected)...", prefix, n_pa)
+        ica = FastICA(n_components=n_pa, random_state=42, max_iter=1000)
+        X_ica = ica.fit_transform(X_scaled)
+        logger.info("[%s] ICA result: %s (n_iter=%d)", prefix, X_ica.shape, ica.n_iter_)
 
         # Save scaler and ICA transformer
-        joblib.dump(scaler_obj, scaler_path)
-        joblib.dump(ica_obj, ica_path)
+        joblib.dump(scaler, scaler_path)
+        joblib.dump(ica, ica_path)
         logger.info("[%s] Saved scaler -> %s", prefix, scaler_path)
         logger.info("[%s] Saved ICA transformer -> %s", prefix, ica_path)
 
-        # 3. Visualizations
+        # 6. Visualizations
         logger.info("[%s] Generating ICA visualizations...", prefix)
         kurtosis_vals = plot_kurtosis_distribution(X_ica, score_type, reports_dir)
-        plot_mixing_matrix_heatmap(ica_obj, score_type, reports_dir)
+        plot_mixing_matrix_heatmap(ica, score_type, reports_dir)
 
         all_kurtosis[score_type] = kurtosis_vals
-        all_ica_objs[score_type] = ica_obj
+        all_ica_objs[score_type] = ica
 
-        # 4. Grid search
+        # 7. Grid search
         logger.info("[%s] Running grid search...", prefix)
         best_params = grid_search(X_ica, y, data_dir)
 
-        # 5. Train final model
+        # 8. Train final model
         logger.info("[%s] Training final model...", prefix)
-        metrics = train_final(X_ica, y, best_params, data_dir, model_path)
+        metrics = train_final(X_ica, y, best_params, data_dir, model_path,
+                              n_pa, f"Parallel Analysis (Horn's method, {PA_N_PERMUTATIONS} perms, {PA_PERCENTILE}th pctl)")
 
         all_metrics[score_type] = metrics
         logger.info(
@@ -467,19 +574,20 @@ def main():
         )
 
     # Write analysis report
-    write_analysis(reports_dir, all_metrics, all_kurtosis, all_ica_objs)
+    write_analysis(reports_dir, all_metrics, all_kurtosis, all_ica_objs, all_pa_data)
 
     # Print summary
     elapsed = time.time() - t0
     print("\n" + "=" * 60)
-    print("ICA MODEL TRAINING COMPLETE")
+    print("ICA MODEL TRAINING COMPLETE (Parallel Analysis-based)")
     print("=" * 60)
     for st in ["s", "v"]:
         m = all_metrics[st]
         b = BASELINES[st]
         d = m["oob_accuracy"] - b["oob_accuracy"]
+        n_pa = all_pa_data[st][0]
         print(
-            f"  VQI-{st.upper()}: {b['n_features']} -> {m['n_features']} ICs | "
+            f"  VQI-{st.upper()}: {b['n_features']} -> {n_pa} ICs (PA) | "
             f"OOB {m['oob_accuracy']:.4f} (was {b['oob_accuracy']:.4f}, {d:+.4f}) | "
             f"n_est={m['n_estimators']}, max_feat={m['max_features']}"
         )

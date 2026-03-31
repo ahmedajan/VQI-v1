@@ -141,15 +141,15 @@ def main():
 
     # Paths
     data_dir = os.path.join(PROJECT_ROOT, "data")
-    features_dir = os.path.join(data_dir, "features")
-    training_csv = os.path.join(data_dir, "training_set_final.csv")
+    features_dir = os.path.join(data_dir, "step4", "features")
+    training_csv = os.path.join(data_dir, "step2", "training_set_final.csv")
 
     # VQI-S paths
-    train_s_dir = os.path.join(data_dir, "training")
+    train_s_dir = os.path.join(data_dir, "step6", "full_feature", "training")
     model_s_path = os.path.join(PROJECT_ROOT, "models", "vqi_rf_model.joblib")
 
     # VQI-V paths
-    train_v_dir = os.path.join(data_dir, "training_v")
+    train_v_dir = os.path.join(data_dir, "step6", "full_feature", "training_v")
     model_v_path = os.path.join(PROJECT_ROOT, "models", "vqi_v_rf_model.joblib")
 
     os.makedirs(train_s_dir, exist_ok=True)
@@ -167,7 +167,7 @@ def main():
         results_s = run_vqi_s_pipeline(
             features_npy=os.path.join(features_dir, "features_s_train.npy"),
             feature_names_json=os.path.join(features_dir, "feature_names_s.json"),
-            selected_features_txt=os.path.join(data_dir, "evaluation", "selected_features.txt"),
+            selected_features_txt=os.path.join(data_dir, "step5", "evaluation", "selected_features.txt"),
             training_csv=training_csv,
             output_dir=train_s_dir,
             model_path=model_s_path,
@@ -202,7 +202,7 @@ def main():
         results_v = run_vqi_v_pipeline(
             features_npy=os.path.join(features_dir, "features_v_train.npy"),
             feature_names_json=os.path.join(features_dir, "feature_names_v.json"),
-            selected_features_txt=os.path.join(data_dir, "evaluation_v", "selected_features.txt"),
+            selected_features_txt=os.path.join(data_dir, "step5", "evaluation_v", "selected_features.txt"),
             training_csv=training_csv,
             output_dir=train_v_dir,
             model_path=model_v_path,

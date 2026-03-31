@@ -21,7 +21,7 @@ sys.path.insert(0, BASE_DIR)
 def main():
     random.seed(42)
 
-    scores_path = os.path.join(BASE_DIR, "data", "test_scores", "vqi_scores_test_voxceleb1.csv")
+    scores_path = os.path.join(BASE_DIR, "data", "step8", "full_feature", "test_scores", "vqi_scores_test_voxceleb1.csv")
     conf_dir = os.path.join(BASE_DIR, "conformance")
     files_dir = os.path.join(conf_dir, "test_files")
     os.makedirs(files_dir, exist_ok=True)

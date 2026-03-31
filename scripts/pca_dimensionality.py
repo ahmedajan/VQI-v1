@@ -21,9 +21,9 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-TRAIN_S = os.path.join(PROJECT_ROOT, "data", "training")
-TRAIN_V = os.path.join(PROJECT_ROOT, "data", "training_v")
-REPORTS = os.path.join(PROJECT_ROOT, "reports", "pca")
+TRAIN_S = os.path.join(PROJECT_ROOT, "data", "step6", "full_feature", "training")
+TRAIN_V = os.path.join(PROJECT_ROOT, "data", "step6", "full_feature", "training_v")
+REPORTS = os.path.join(PROJECT_ROOT, "reports", "step6", "dimensionality_reduction")
 
 COLOR_S = "#2196F3"
 COLOR_V = "#9C27B0"

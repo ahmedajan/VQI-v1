@@ -49,7 +49,7 @@ def compute_thresholds(score_dir: str | Path) -> dict:
       - fmr_001: score at FMR=0.001 on impostor_norm distribution (Class 0 gate)
 
     Args:
-        score_dir: Path to implementation/data/provider_scores/
+        score_dir: Path to implementation/data/step1/provider_scores/
 
     Returns:
         Dict with thresholds per provider, e.g.:

@@ -11,15 +11,14 @@ VQI produces two complementary scores from 0 to 100:
 
 Higher scores indicate better quality for speaker recognition systems.
 
-**Key Results:**
+**Key Results (v4.0):**
 - Trained on 1.2 million speech samples from 8 datasets
 - Evaluated against 5 speaker recognition systems (ECAPA-TDNN, ResNetSE34, ECAPA2, x-vector, WavLM)
-- Full-feature baseline: VQI-S AUC = 0.8719, VQI-V AUC = 0.8812
-- **Deployed model (v2.0):** PCA-90% pipeline with 77% dimensionality reduction (VQI-S) and 65% (VQI-V)
-- PCA-90% VQI-S: AUC = 0.8600, best ERC = 38.0% FNMR reduction at 20% rejection
-- PCA-90% VQI-V: AUC = 0.8619, best ERC = 24.0% FNMR reduction at 30% rejection
-- 5-way DR comparison: Full vs PCA-90% vs PCA-95% vs ICA vs Factor Analysis
-- Cross-system generalization confirmed (trained on 3 providers, evaluated on 5)
+- VQI-S: Ridge Regressor, AUC = 0.8812, mean ERC@20% = 7.7%
+- VQI-V: XGBoost Regressor, AUC = 0.9122, mean ERC@20% = 6.1%
+- DR optimization: 8 methods tested, full features (no DR) confirmed optimal
+- Model size: 6.7MB total (100x smaller than v2.0)
+- 5 test datasets, 5 providers, cross-system generalization confirmed
 
 ## Desktop Application
 
@@ -27,13 +26,13 @@ A standalone Windows desktop application is available with a graphical interface
 
 ### Download
 
-**[Download VQI v2.0 from Google Drive](https://drive.google.com/drive/folders/1C9p9ENf_eA-GmDh--iXlX6bwLdupAkh6)**
+**[Download VQI v4.0 from Google Drive](https://drive.google.com/drive/folders/1C9p9ENf_eA-GmDh--iXlX6bwLdupAkh6)**
 
-1. Download **`VQI-v2.0-windows.zip`** from the link above
+1. Download **`VQI-v4.0-windows.zip`** from the link above
 2. Extract the ZIP to any folder on your computer
 3. Open the extracted folder and run **`VQI.exe`**
 
-v2.0 uses the PCA-90% scoring pipeline for faster, more compact inference.
+v4.0 uses Ridge (VQI-S) + XGBoost (VQI-V) regressors on full features with per-score StandardScaler.
 
 No installation or Python required.
 
@@ -70,41 +69,46 @@ No installation or Python required.
 ### Quick Start: Score a Single File
 
 ```python
+from vqi.engine import VQIEngine
+
+# Initialize engine (loads all models once)
+engine = VQIEngine(base_dir=".")
+
+# Score a file
+result = engine.score_file("path/to/audio.wav")
+print(f"VQI-S: {result.score_s}, VQI-V: {result.score_v}")
+print(result.plain_feedback_s)
+print(result.plain_feedback_v)
+```
+
+#### Low-Level Pipeline
+
+```python
 from vqi.preprocessing.audio_loader import load_audio
 from vqi.preprocessing.normalize import dc_remove_and_normalize
 from vqi.preprocessing.vad import energy_vad, reconstruct_from_mask
 from vqi.core.feature_orchestrator import compute_all_features
 from vqi.core.feature_orchestrator_v import compute_all_features_v
-from vqi.prediction.random_forest import load_model, predict_score
+import joblib
+import numpy as np
+import xgboost as xgb
 
 # Load and preprocess
-waveform, sr = load_audio("path/to/audio.wav")
+waveform = load_audio("path/to/audio.wav")
 normalized = dc_remove_and_normalize(waveform)
-mask = energy_vad(normalized, sr)
+mask, speech_dur, speech_ratio = energy_vad(normalized, 16000)
 speech = reconstruct_from_mask(normalized, mask)
 
 # Extract features
-features_s, intermediates = compute_all_features(speech, sr, mask, waveform)
-features_v = compute_all_features_v(speech, sr, mask, intermediates)
+features_s, feat_array_s, intermediates = compute_all_features(speech, 16000, mask, raw_waveform=waveform)
+features_v, feat_array_v = compute_all_features_v(speech, 16000, mask, intermediates=intermediates)
 
-# Load model and predict (full-feature baseline)
-clf = load_model("models/vqi_rf_model.joblib")
-# Select only the 430 trained features (see data/evaluation/selected_features.txt)
-# score = predict_score(clf, selected_feature_vector)
-```
-
-#### PCA-90% Pipeline (Deployed Model)
-
-```python
-import joblib
-
-# Load PCA-90% pipeline components
-scaler = joblib.load("models/vqi_pca_scaler_s.joblib")
-pca = joblib.load("models/vqi_pca_transformer_s.joblib")
-clf = joblib.load("models/vqi_rf_pca_model.joblib")
-
-# Score: features → scale → PCA → RF probability → [0-100]
-score = int(clf.predict_proba(pca.transform(scaler.transform(features.reshape(1, -1))))[0, 1] * 100)
+# Load v4.0 models and predict
+scaler_s = joblib.load("models/vqi_v4_scaler_s.joblib")
+model_s = joblib.load("models/vqi_v4_model_s.joblib")
+# selected_features_s = ... (load from data/step5/evaluation/selected_features.txt)
+# feat_vec = np.array([features_s[f] for f in selected_features_s])
+# score_s = int(np.clip(np.round(model_s.predict(scaler_s.transform(feat_vec.reshape(1,-1)))[0] * 100), 0, 100))
 ```
 
 ### Installation
@@ -116,21 +120,19 @@ cd VQI
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Download pre-trained models (if not using Git LFS)
-python scripts/download_models.py
 ```
 
 ### Requirements
 
 - Python 3.10+
 - PyTorch 2.0+ (with CUDA recommended for embedding extraction)
+- XGBoost 2.0+
 - ~16GB RAM for feature extraction
 - ~50GB disk for datasets (not included)
 
 ## Datasets Required
 
-VQI is trained and evaluated on 8 publicly available speech datasets. You must obtain these independently (see [DATASETS.md](DATASETS.md) for download links and expected directory structure):
+VQI is trained and evaluated on 8 publicly available speech datasets plus 2 additional test sets. You must obtain these independently (see [DATASETS.md](DATASETS.md) for download links and expected directory structure):
 
 | Dataset | Speakers | Utterances | Used For |
 |---------|----------|------------|----------|
@@ -140,6 +142,8 @@ VQI is trained and evaluated on 8 publicly available speech datasets. You must o
 | VCTK | 110 | 44,455 | Testing |
 | VOiCES | 300 | 22,000+ | Training |
 | CN-Celeb1 | 1,000 | 126,532 | Testing |
+| VPQAD | 54 | 332 | Testing |
+| VSEA DC | 100 | 336 | Testing |
 | MUSAN | -- | -- | Noise augmentation (training labels) |
 | RIR | -- | -- | Reverberation augmentation (training labels) |
 
@@ -181,147 +185,122 @@ python scripts/run_step5.py
 ```
 Result: 430 VQI-S features selected, 133 VQI-V features selected.
 
-### Step 6: Random Forest Training
-Train Random Forest classifiers for VQI-S and VQI-V.
+### Step 6: Model Training
+Train Random Forest baseline classifiers, then Ridge + XGBoost regressors.
 ```bash
-python scripts/run_step6.py
+python scripts/run_step6.py                    # RF baseline
+python scripts/dr_optimization.py              # DR optimization + Ridge/XGBoost training
 ```
-Result: VQI-S OOB error = 0.1824, VQI-V OOB error = 0.1794.
+Result: Ridge Regressor (S, AUC=0.8812), XGBoost Regressor (V, AUC=0.9122).
 
 ### Step 6b: Dimensionality Reduction Experiments
-Train PCA, ICA, and Factor Analysis variants. Compare 5 DR methods.
+Train PCA, ICA, and Factor Analysis variants. Compare 8 DR methods.
 ```bash
 python scripts/pca_dimensionality.py
 python scripts/train_pca_models.py
 python scripts/train_ica_models.py
 python scripts/train_fa_models.py
+python scripts/dr_optimization.py              # Comprehensive 8-way DR comparison
 ```
-Result: PCA-90% selected as deployed model (best balanced OOB loss: -0.0263).
+Result: Full features (no DR) confirmed optimal for both VQI-S and VQI-V.
 
 ### Step 7: Model Validation
 Validate on 50,000 held-out samples. Compute AUC, CDF shift tests, cross-validation.
 ```bash
-# Full-feature baseline
 python scripts/run_step7.py
-
-# PCA-90% deployed model
-python scripts/run_step7_pca90.py
-python scripts/visualize_step7_pca90.py
 ```
-Result (full): VQI-S AUC = 0.8719, VQI-V AUC = 0.8812.
-Result (PCA-90%): VQI-S AUC = 0.8600, VQI-V AUC = 0.8619.
+Result: VQI-S AUC = 0.8812, VQI-V AUC = 0.9122.
 
 ### Step 8: Evaluation of Predictive Power
-Evaluate on 3 test datasets (VoxCeleb1-test, VCTK, CN-Celeb) using ERC, Ranked DET, cross-system analysis.
+Evaluate on 5 test datasets using ERC, Ranked DET, cross-system analysis.
 ```bash
-# Full-feature baseline
 python scripts/run_step8.py
-
-# PCA-90% deployed model
-python scripts/run_step8_pca90.py --dataset voxceleb1
-python scripts/run_step8_pca90.py --dataset vctk
-python scripts/run_step8_pca90.py --dataset cnceleb
-python scripts/visualize_step8_pca90.py
+python scripts/regenerate_final_model_reports.py    # Full v4.0 report generation
 ```
 
-## Pre-trained Models
+### Step X1: Model Enhancement
+Comprehensive 56-model comparison (7 families x 2 paradigms x 2 data sizes x 2 score types).
+```bash
+python scripts/x1_comprehensive_comparison.py
+```
+Result: Ridge (S) + XGBoost (V) selected as optimal models.
 
-### Full-Feature Baseline (v1.0)
-- `models/vqi_rf_model.joblib` -- VQI-S model (1000 trees, 430 features, ~192MB)
-- `models/vqi_v_rf_model.joblib` -- VQI-V model (1000 trees, 133 features, ~204MB)
+## Pre-trained Models (v4.0)
 
-### PCA-90% Deployed Model (v2.0)
-- `models/vqi_pca_scaler_s.joblib` -- VQI-S StandardScaler (12K)
-- `models/vqi_pca_transformer_s.joblib` -- VQI-S PCA, 430→99 components (172K)
-- `models/vqi_rf_pca_model.joblib` -- VQI-S PCA RF classifier (1000 trees, ~212MB)
-- `models/vqi_pca_scaler_v.joblib` -- VQI-V StandardScaler (4K)
-- `models/vqi_pca_transformer_v.joblib` -- VQI-V PCA, 133→47 components (28K)
-- `models/vqi_v_rf_pca_model.joblib` -- VQI-V PCA RF classifier (500 trees, ~97MB)
+- `models/vqi_v4_meta.json` -- Metadata (DR config, AUC, ERC metrics)
+- `models/vqi_v4_scaler_s.joblib` -- VQI-S StandardScaler (11KB)
+- `models/vqi_v4_model_s.joblib` -- VQI-S Ridge Regressor (2.7KB)
+- `models/vqi_v4_scaler_v.joblib` -- VQI-V StandardScaler (3.7KB)
+- `models/vqi_v4_model_v.json` -- VQI-V XGBoost Regressor (3.3MB)
 
-These files exceed GitHub's 100MB limit. If not tracked via Git LFS, download them from the [Releases](https://github.com/YOUR_USERNAME/VQI/releases) page.
+Total model size: ~3.3MB (vs 705MB in v2.0).
 
 ## Repository Structure
 
 ```
 VQI/
 |-- vqi/                    # Core Python package
+|   |-- engine.py           # VQIEngine: single entry-point for scoring
+|   |-- feedback.py         # Feedback templates, limiting factors, category scores
 |   |-- preprocessing/      # Audio loading, normalization, VAD
 |   |-- core/               # Feature orchestration, quality algorithm
 |   |-- features/           # 23 frame-level + 32 global feature modules (VQI-S)
 |   |-- features_v/         # 5 voice distinctiveness feature modules (VQI-V)
-|   |-- prediction/         # Random Forest model loading and prediction
+|   |-- prediction/         # Legacy RF model loading (v1.0/v2.0)
 |   |-- evaluation/         # ERC, DET, cross-system evaluation
 |   |-- training/           # Feature selection, model training, validation
 |   |-- providers/          # Speaker verification system wrappers (P1-P5)
 |-- scripts/                # Step execution and visualization scripts
 |-- tests/                  # Unit and integration tests
-|-- models/                 # Pre-trained RF models (full-feature + PCA-90%)
+|-- models/                 # Pre-trained v4.0 models (Ridge + XGBoost)
 |-- data/                   # Split manifests, labels, selected features
-|   |-- training/           # Full-feature VQI-S training metrics
-|   |-- training_v/         # Full-feature VQI-V training metrics
-|   |-- training_pca/       # PCA-90% VQI-S training metrics
-|   |-- training_pca_v/     # PCA-90% VQI-V training metrics
-|   |-- training_pca95/     # PCA-95% VQI-S training metrics
-|   |-- training_ica/       # ICA VQI-S training metrics
-|   |-- training_fa/        # FA VQI-S training metrics
+|   |-- splits/             # Train/val/test split manifests
+|   |-- snorm_cohort/       # S-norm cohort embeddings (5 providers)
+|   |-- step2/labels/       # Label thresholds
+|   |-- step5/evaluation/   # Selected features (430 S, 133 V)
+|   |-- step6/full_feature/ # Feature importances
+|   |-- step9/              # Percentile tables, feature categories
 |-- reports/                # Visualizations and analysis for each step
-|   |-- step7_pca90/        # PCA-90% validation results
-|   |-- step8_pca90/        # PCA-90% VQI-S evaluation results
-|   |-- step8_pca90_v/      # PCA-90% VQI-V evaluation results
+|   |-- step1/ - step8/     # Per-step analysis reports
 |   |-- step9_v2/           # Software v2.0 conformance results
-|   |-- dimensionality_reduction/  # 5-way DR comparison
+|   |-- Final Model/        # v4.0 comprehensive reports (427 files)
+|   |-- x1/                 # 56-model comparison (140 plots)
+|   |-- dimensionality_reduction/  # 8-way DR comparison
 |-- screenshots/            # Desktop application screenshots
-|-- CHANGELOG.md            # Application release history
+|-- CHANGELOG.md            # Version history (v1.0 - v4.0)
 |-- DATASETS.md             # Dataset download links and directory structure
 |-- requirements.txt        # Python dependencies
 ```
 
-## Results Summary
+## Results Summary (v4.0)
 
-### Error vs. Reject Curves (ERC) -- Full-Feature Baseline
+### Model Comparison
 
-Best FNMR reduction at 20% rejection (FNMR=1% operating point):
+| Metric | VQI-S (Ridge) | VQI-V (XGBoost) |
+|--------|--------------|-----------------|
+| AUC-ROC | 0.8812 | 0.9122 |
+| Mean ERC@20% | 7.7% | 6.1% |
+| Features | 430 (full) | 133 (full) |
+| Training data | 20,288 balanced | 58,102 expanded |
+| Inference | 0.005ms | 0.035ms |
+| Model size | 2.7KB | 3.3MB |
 
-| Dataset | Best Provider | VQI-S | VQI-V |
-|---------|--------------|-------|-------|
-| VoxCeleb1-test | x-vector | 42.1% | -- |
-| VCTK | x-vector | 47.6% | 26.9% |
-| CN-Celeb | ResNet | 11.9% | 5.2% |
+### DR Optimization (8 Methods Tested)
 
-### Error vs. Reject Curves (ERC) -- PCA-90% Deployed Model
+| Method | VQI-S AUC | VQI-V AUC | Result |
+|--------|-----------|-----------|--------|
+| **Full (deployed)** | **0.8812** | **0.9122** | **Best** |
+| PCA-99% | 0.8763 | 0.8888 | -0.3% |
+| FA-BIC | 0.8776 | 0.8954 | -1.0% |
+| PCA-95% | 0.8628 | 0.8851 | -2.3% |
+| PCA-90% | 0.8587 | 0.8763 | -2.9% |
+| PCA-85% | 0.8489 | 0.8694 | -3.8% |
+| ICA-PA | 0.8436 | 0.8647 | -4.3% |
+| PCA-80% | 0.8438 | 0.8616 | -4.4% |
 
-| Dataset | Best Provider | VQI-S | VQI-V |
-|---------|--------------|-------|-------|
-| VoxCeleb1-test | x-vector | 38.0% (20% rej) | 15.9% (30% rej) |
-| VCTK | ECAPA2 | 38.3% (30% rej) | 24.0% (30% rej) |
-| CN-Celeb | ECAPA2 | 10.9% (30% rej) | 4.1% (30% rej) |
+### Evaluation on 5 Test Datasets (v4.0, 5 Providers)
 
-### Ranked DET Separation -- Full-Feature Baseline
-
-EER separation ratio (highest-quality / lowest-quality group):
-
-| Dataset | ResNet | ECAPA | ECAPA2 | x-vector | WavLM |
-|---------|--------|-------|--------|----------|-------|
-| VoxCeleb1 | 2.04x | 1.72x | 1.41x | 1.10x | 1.29x |
-| VCTK | 3.27x | 2.62x | 2.21x | 1.88x | 1.41x |
-
-### Ranked DET Separation -- PCA-90% Deployed Model
-
-| Dataset | ResNet | ECAPA | ECAPA2 | x-vector | WavLM |
-|---------|--------|-------|--------|----------|-------|
-| VoxCeleb1 | 1.47x | 1.44x | 1.44x | 1.67x | 1.04x |
-| VCTK | 4.26x | 3.81x | 6.41x | 2.47x | 1.32x |
-| CN-Celeb | 3.72x | 3.02x | 3.20x | 2.07x | 2.06x |
-
-### Dimensionality Reduction Comparison
-
-| Method | VQI-S OOB | VQI-V OOB | Dim Reduction |
-|--------|-----------|-----------|---------------|
-| Full features | 0.8176 | 0.8206 | — |
-| PCA-90% | 0.8036 | 0.8082 | 77% (S), 65% (V) |
-| PCA-95% | 0.8016 | 0.8086 | 63% (S), 47% (V) |
-| Factor Analysis | 0.8086 | 0.7961 | 77% (S), 65% (V) |
-| ICA | 0.7935 | 0.7949 | 77% (S), 65% (V) |
+Full evaluation with ERC, Ranked DET, cross-system generalization, combined ERC, and quadrant analysis across VoxCeleb1-test, VCTK, CN-Celeb, VPQAD, and VSEA DC. See `reports/Final Model/step8/` for all 132 report files.
 
 ## Citation
 

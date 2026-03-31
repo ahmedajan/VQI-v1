@@ -25,9 +25,9 @@ import numpy as np
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from implementation.vqi.providers import TRAIN_PROVIDERS, PROVIDERS
 
-EMBEDDINGS_DIR = os.path.join("implementation", "data", "embeddings")
-COHORT_DIR = os.path.join("implementation", "data", "snorm_cohort")
-OUTPUT_DIR = os.path.join("implementation", "data", "provider_scores")
+EMBEDDINGS_DIR = os.path.join("implementation", "data", "step1", "embeddings")
+COHORT_DIR = os.path.join("implementation", "data", "step1", "snorm_cohort")
+OUTPUT_DIR = os.path.join("implementation", "data", "step1", "provider_scores")
 
 PROVIDER_DIMS = {
     "P1_ECAPA": 192,

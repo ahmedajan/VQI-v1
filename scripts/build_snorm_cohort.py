@@ -2,7 +2,7 @@
 
 Samples 1,000 speakers from VoxCeleb2 dev/wav, extracts embeddings from
 all 5 providers, computes L2-normalized mean embedding per speaker per
-provider, and saves results to implementation/data/snorm_cohort/.
+provider, and saves results to implementation/data/step1/snorm_cohort/.
 
 Checkpoints every 50 speakers so interrupted runs can be resumed with --resume.
 
@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from implementation.vqi.providers import get_provider, PROVIDERS
 
 VOXCELEB2_DEV_WAV = os.path.join("Datasets", "voxCELEB2", "dev", "wav")
-OUTPUT_DIR = os.path.join("implementation", "data", "snorm_cohort")
+OUTPUT_DIR = os.path.join("implementation", "data", "step1", "snorm_cohort")
 CHECKPOINT_PATH = os.path.join(OUTPUT_DIR, "_checkpoint.pkl")
 
 NUM_COHORT_SPEAKERS = 1000

@@ -19,9 +19,9 @@ warnings.filterwarnings("ignore")
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-FEATURES_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "features")
+FEATURES_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "step4", "features")
 REPORTS_DIR = os.path.join(os.path.dirname(__file__), "..", "reports", "step4")
-TRAIN_CSV = os.path.join(os.path.dirname(__file__), "..", "data", "training_set_final.csv")
+TRAIN_CSV = os.path.join(os.path.dirname(__file__), "..", "data", "step2", "training_set_final.csv")
 
 
 def load_data():

@@ -3,9 +3,9 @@
 Adapted from run_step8.py for PCA dimensionality-reduced models.
 Differences from the full-feature version:
   - Phase A is skipped entirely (data already extracted by full-feature runs)
-  - VQI scores loaded from data/test_scores_pca90/ (PCA-90% model predictions)
-  - Pair definitions and provider pair scores loaded from data/test_scores/ (unchanged)
-  - Output written to data/step8_eval_pca90/{dataset}/
+  - VQI scores loaded from data/step8/pca90/test_scores_pca90/ (PCA-90% model predictions)
+  - Pair definitions and provider pair scores loaded from data/step8/full_feature/test_scores/ (unchanged)
+  - Output written to data/step8/pca90/step8_eval_pca90/{dataset}/
   - Phase F (benchmarks) is skipped (not model-specific)
   - DET curve .npz files include a "_pca90" suffix
 
@@ -45,8 +45,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 DATA_DIR = os.path.join(_IMPL_DIR, "data")
-SCORES_DIR = os.path.join(DATA_DIR, "test_scores")           # pair definitions + provider pair scores
-SCORES_PCA90_DIR = os.path.join(DATA_DIR, "test_scores_pca90")  # PCA-90% VQI scores
+SCORES_DIR = os.path.join(DATA_DIR, "step8", "full_feature", "test_scores")           # pair definitions + provider pair scores
+SCORES_PCA90_DIR = os.path.join(DATA_DIR, "step8", "pca90", "test_scores_pca90")  # PCA-90% VQI scores
 
 ALL_PROVIDERS = ["P1_ECAPA", "P2_RESNET", "P3_ECAPA2", "P4_XVECTOR", "P5_WAVLM"]
 
@@ -54,6 +54,8 @@ DATASET_TO_SPLIT = {
     "voxceleb1": "test_voxceleb1",
     "vctk": "test_vctk",
     "cnceleb": "test_cnceleb",
+    "vpqad": "test_vpqad",
+    "vseadc": "test_vseadc",
 }
 
 
@@ -469,7 +471,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Step 8 (PCA-90%%): Evaluation of Predictive Power"
     )
-    parser.add_argument("--dataset", required=True, choices=["voxceleb1", "vctk", "cnceleb"])
+    parser.add_argument("--dataset", required=True, choices=["voxceleb1", "vctk", "cnceleb", "vpqad", "vseadc"])
     parser.add_argument("--skip-s", action="store_true", help="Skip Phase B (VQI-S)")
     parser.add_argument("--skip-v", action="store_true", help="Skip Phase C (VQI-V)")
     parser.add_argument("--skip-cross", action="store_true", help="Skip Phase D (cross-system)")
@@ -481,7 +483,7 @@ def main():
     split_name = DATASET_TO_SPLIT[dataset]
 
     # Output directories — under step8_eval_pca90/
-    eval_base = os.path.join(DATA_DIR, "step8_eval_pca90")
+    eval_base = os.path.join(DATA_DIR, "step8", "pca90", "step8_eval_pca90")
     eval_s_dir = os.path.join(eval_base, dataset, "vqi_s")
     eval_v_dir = os.path.join(eval_base, dataset, "vqi_v")
     eval_cross_dir = os.path.join(eval_base, dataset, "cross_system")
@@ -524,8 +526,8 @@ def main():
                     f"{len(data['provider_pair_scores'])} providers")
     except Exception as e:
         logger.error(f"Failed to load evaluation data: {e}")
-        logger.error("Ensure PCA-90%% VQI scores exist in data/test_scores_pca90/ "
-                     "and pair data exists in data/test_scores/.")
+        logger.error("Ensure PCA-90%% VQI scores exist in data/step8/pca90/test_scores_pca90/ "
+                     "and pair data exists in data/step8/full_feature/test_scores/.")
         sys.exit(1)
 
     # Phase B: VQI-S

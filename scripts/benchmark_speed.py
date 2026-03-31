@@ -36,9 +36,9 @@ logger = logging.getLogger(__name__)
 
 DATA_DIR = os.path.join(_IMPL_DIR, "data")
 MODELS_DIR = os.path.join(_IMPL_DIR, "models")
-EVAL_DIR = os.path.join(DATA_DIR, "evaluation")
-EVAL_V_DIR = os.path.join(DATA_DIR, "evaluation_v")
-OUTPUT_DIR = os.path.join(DATA_DIR, "test_scores")
+EVAL_DIR = os.path.join(DATA_DIR, "step5", "evaluation")
+EVAL_V_DIR = os.path.join(DATA_DIR, "step5", "evaluation_v")
+OUTPUT_DIR = os.path.join(DATA_DIR, "step8", "full_feature", "test_scores")
 
 DURATIONS = [3, 10, 60]  # seconds
 SAMPLE_RATE = 16000
@@ -152,9 +152,9 @@ def main():
     import json as json_mod
     import joblib
 
-    with open(os.path.join(DATA_DIR, "features", "feature_names_s.json"), "r", encoding="utf-8") as f:
+    with open(os.path.join(DATA_DIR, "step4", "features", "feature_names_s.json"), "r", encoding="utf-8") as f:
         feature_names_s = json_mod.load(f)
-    with open(os.path.join(DATA_DIR, "features", "feature_names_v.json"), "r", encoding="utf-8") as f:
+    with open(os.path.join(DATA_DIR, "step4", "features", "feature_names_v.json"), "r", encoding="utf-8") as f:
         feature_names_v = json_mod.load(f)
 
     with open(os.path.join(EVAL_DIR, "selected_features.txt"), "r", encoding="utf-8") as f:

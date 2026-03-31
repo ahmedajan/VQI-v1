@@ -38,9 +38,9 @@ logger = logging.getLogger(__name__)
 
 # Paths
 DATA_DIR = os.path.join(_IMPL_DIR, "data")
-FEATURES_DIR = os.path.join(DATA_DIR, "features")
-TRAIN_CSV = os.path.join(DATA_DIR, "training_set_final.csv")
-VAL_CSV = os.path.join(DATA_DIR, "splits", "val_set.csv")
+FEATURES_DIR = os.path.join(DATA_DIR, "step4", "features")
+TRAIN_CSV = os.path.join(DATA_DIR, "step2", "training_set_final.csv")
+VAL_CSV = os.path.join(DATA_DIR, "step1", "splits", "val_set.csv")
 
 
 def extract_one_file(filepath):

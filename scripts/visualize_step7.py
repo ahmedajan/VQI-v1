@@ -48,7 +48,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-REPORT_DIR = os.path.join(PROJECT_ROOT, "reports", "step7")
+REPORT_DIR = os.path.join(PROJECT_ROOT, "reports", "step7", "full_feature")
 os.makedirs(REPORT_DIR, exist_ok=True)
 
 plt.rcParams.update({
@@ -80,8 +80,8 @@ PROVIDER_LABELS = {
 def load_validation_data(score_type):
     """Load all validation outputs for a score type."""
     suffix = "_v" if score_type == "v" else ""
-    val_dir = os.path.join(PROJECT_ROOT, "data", f"validation{suffix}")
-    train_dir = os.path.join(PROJECT_ROOT, "data", f"training{suffix}")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "full_feature", f"validation{suffix}")
+    train_dir = os.path.join(PROJECT_ROOT, "data", "step6", "full_feature", f"training{suffix}")
 
     results_csv = os.path.join(val_dir, f"validation_results{suffix}.csv")
     df = pd.read_csv(results_csv)
@@ -360,7 +360,7 @@ def plot_score_vs_genuine(data, prefix):
 
 def plot_dual_score_scatter():
     """Plot 9: 2D scatter VQI-S vs VQI-V colored by class."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "full_feature", "validation")
     dual_csv = os.path.join(val_dir, "dual_score_data.csv")
     thresh_path = os.path.join(val_dir, "dual_score_thresholds.yaml")
 
@@ -422,7 +422,7 @@ def plot_dual_score_scatter():
 
 def plot_quadrant_bar_chart():
     """Plot 10: Per-quadrant Class 1 rate bar chart."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "full_feature", "validation")
     quad_csv = os.path.join(val_dir, "quadrant_analysis.csv")
 
     if not os.path.exists(quad_csv):
@@ -470,7 +470,7 @@ def plot_quadrant_bar_chart():
 
 def plot_combined_rejection_curve():
     """Plot 11: Combined rejection curve — S-only vs V-only vs union vs intersection."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "full_feature", "validation")
     dual_csv = os.path.join(val_dir, "dual_score_data.csv")
 
     if not os.path.exists(dual_csv):
@@ -657,8 +657,8 @@ def generate_validation_report(data, prefix, report_dir):
 
 def generate_analysis_md():
     """Generate analysis.md combining all findings."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation")
-    val_v_dir = os.path.join(PROJECT_ROOT, "data", "validation_v")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "full_feature", "validation")
+    val_v_dir = os.path.join(PROJECT_ROOT, "data", "step7", "full_feature", "validation_v")
 
     # Load metrics
     s_metrics = {}
@@ -1122,7 +1122,7 @@ def plot_forest_plot(data, prefix):
 
 def plot_dual_score_hexbin():
     """Hexbin: VQI-S vs VQI-V colored by density."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "full_feature", "validation")
     dual_csv = os.path.join(val_dir, "dual_score_data.csv")
 
     if not os.path.exists(dual_csv):
@@ -1150,7 +1150,7 @@ def plot_dual_score_hexbin():
 
 def plot_dual_quadrant_table():
     """Render quadrant_analysis.csv as a matplotlib table image."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "full_feature", "validation")
     quad_csv = os.path.join(val_dir, "quadrant_analysis.csv")
 
     if not os.path.exists(quad_csv):
@@ -1211,7 +1211,7 @@ def plot_dual_quadrant_table():
 
 def plot_dual_quadrant_genuine_violin():
     """4-panel violin: genuine score distributions per quadrant for P1."""
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "full_feature", "validation")
     dual_csv = os.path.join(val_dir, "dual_score_data.csv")
     thresh_path = os.path.join(val_dir, "dual_score_thresholds.yaml")
 
@@ -1267,8 +1267,8 @@ def plot_dual_quadrant_genuine_violin():
 
 def generate_analysis_v_md():
     """Generate 7_analysis_v.md with VQI-V + dual-score findings."""
-    val_v_dir = os.path.join(PROJECT_ROOT, "data", "validation_v")
-    val_dir = os.path.join(PROJECT_ROOT, "data", "validation")
+    val_v_dir = os.path.join(PROJECT_ROOT, "data", "step7", "full_feature", "validation_v")
+    val_dir = os.path.join(PROJECT_ROOT, "data", "step7", "full_feature", "validation")
 
     # Load V metrics
     v_metrics = {}
@@ -1279,7 +1279,7 @@ def generate_analysis_v_md():
 
     # Load V training metrics
     v_train = {}
-    v_train_yaml = os.path.join(PROJECT_ROOT, "data", "training_v", "training_metrics.yaml")
+    v_train_yaml = os.path.join(PROJECT_ROOT, "data", "step6", "full_feature", "training_v", "training_metrics.yaml")
     if os.path.exists(v_train_yaml):
         with open(v_train_yaml, "r", encoding="utf-8") as f:
             v_train = yaml.safe_load(f)

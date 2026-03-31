@@ -11,7 +11,7 @@ import torchaudio
 from .base import SpeakerProvider
 
 MODEL_ID = "microsoft/wavlm-base-plus-sv"
-CACHE_DIR = "implementation/data/pretrained/p5_wavlm"
+CACHE_DIR = "implementation/data/step1/pretrained/p5_wavlm"
 
 
 class P5_WAVLM(SpeakerProvider):

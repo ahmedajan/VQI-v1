@@ -48,18 +48,18 @@ def load_json(path):
 
 def main():
     parser = argparse.ArgumentParser(description="Generate VQI-V evaluation report")
-    parser.add_argument("--dataset", required=True, choices=["voxceleb1", "vctk", "cnceleb"])
+    parser.add_argument("--dataset", required=True, choices=["voxceleb1", "vctk", "cnceleb", "vpqad", "vseadc"])
     args = parser.parse_args()
 
     dataset = args.dataset
-    eval_base = os.path.join(DATA_DIR, "step8_eval", dataset)
+    eval_base = os.path.join(DATA_DIR, "step8", "full_feature", "step8_eval", dataset)
 
     eval_v = load_json(os.path.join(eval_base, "vqi_v", f"vqi_v_evaluation_{dataset}.json"))
     cross_v = load_json(os.path.join(eval_base, "cross_system", f"cross_system_vqi_v_{dataset}.json"))
     combined = load_json(os.path.join(eval_base, "dual_score", f"combined_erc_{dataset}.json"))
     quadrant = load_json(os.path.join(eval_base, "dual_score", f"quadrant_analysis_{dataset}.json"))
 
-    report_dir = os.path.join(REPORTS_DIR, "evaluation_v")
+    report_dir = os.path.join(REPORTS_DIR, "step8", "full_feature_v")
     os.makedirs(report_dir, exist_ok=True)
 
     lines = [

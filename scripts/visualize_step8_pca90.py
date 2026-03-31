@@ -1,8 +1,8 @@
 """Step 8 PCA-90%: Visualization — 25 outputs per blueprint M.8.
 
 Adapted from visualize_step8.py for PCA-90% dimensionality-reduced models.
-All data loaded from data/step8_eval_pca90/ and plots saved to
-reports/step8_pca90/ (VQI-S) and reports/step8_pca90_v/ (VQI-V).
+All data loaded from data/step8/pca90/step8_eval_pca90/ and plots saved to
+reports/step8/pca90/ (VQI-S) and reports/step8/pca90_v/ (VQI-V).
 
 VQI-S plots (1-15):
   1.  erc_fnmr1_all_providers_pca90.png
@@ -13,7 +13,7 @@ VQI-S plots (1-15):
   6.  cross_system_ranked_det_pca90.png
   7.  erc_summary_table_pca90.png
   8.  det_separation_table_pca90.png
-  9.  timing_benchmark_pca90.png  (loaded from original data/test_scores/)
+  9.  timing_benchmark_pca90.png  (loaded from original data/step8/full_feature/test_scores/)
   10. erc_ridgeline_across_datasets_pca90.png
   11. provider_performance_radar_pca90.png
   12. fnmr_reduction_forest_plot_pca90.png
@@ -127,12 +127,12 @@ def plot_erc_all_providers(eval_data, fnmr_key, output_path, title_suffix):
         ax.legend(fontsize=8)
         ax.grid(True, alpha=0.3)
 
-    fig.suptitle(f"ERC Curves {PCA_LABEL} ({title_suffix})", fontsize=14, y=1.02)
+    # Suptitle removed — provided by LaTeX caption
     fig.tight_layout()
     save_fig(fig, output_path)
 
 
-def plot_ranked_det_all_providers(eval_data, dataset, data_dir, prefix="", save_dir=None):
+def plot_ranked_det_all_providers(eval_data, dataset, data_dir, prefix="", save_dir=None, suffix="_pca90"):
     """Plot 4 or 17: Ranked DET for all providers."""
     providers = [p for p in eval_data if not p.startswith("_")]
     fig, axes = plt.subplots(1, len(providers), figsize=(4 * len(providers), 4), squeeze=False)
@@ -144,7 +144,7 @@ def plot_ranked_det_all_providers(eval_data, dataset, data_dir, prefix="", save_
         det_info = eval_data[pn].get("ranked_det", {})
 
         for gname in ["bottom", "middle", "top"]:
-            det_file = os.path.join(data_dir, f"det{prefix}_{dataset}_{pn}_{gname}.npz")
+            det_file = os.path.join(data_dir, f"det{prefix}_{dataset}_{pn}_{gname}{suffix}.npz")
             if os.path.exists(det_file):
                 data = np.load(det_file)
                 fmr = data["fmr"]
@@ -165,41 +165,61 @@ def plot_ranked_det_all_providers(eval_data, dataset, data_dir, prefix="", save_
         ax.set_xlim(1e-4, 1)
         ax.set_ylim(1e-4, 1)
 
-    fig.suptitle(f"Ranked DET Curves {PCA_LABEL} {'(VQI-V) ' if prefix else ''}-- {dataset}", fontsize=14, y=1.02)
+    # Suptitle removed — provided by LaTeX caption
     fig.tight_layout()
     out_dir = save_dir or data_dir
     output_path = os.path.join(out_dir, f"ranked_det{prefix}_all_providers_pca90.png")
     save_fig(fig, output_path)
 
 
-def plot_cross_system_erc(cross_data, output_path, score_label="S"):
-    """Plot 5 or 18: Cross-system ERC for P4/P5."""
+def plot_cross_system_erc(cross_data, output_path, score_label="S", eval_data=None):
+    """Plot 5 or 18: Cross-system ERC for P4/P5.
+
+    ERC curve arrays are in eval_data (main evaluation JSON), not cross_data.
+    cross_data only has summary stats (reductions, monotonicity).
+    """
     test_providers = ["P4_XVECTOR", "P5_WAVLM"]
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
 
     for i, pn in enumerate(test_providers):
         ax = axes[i]
-        if pn not in cross_data:
-            continue
-        pdata = cross_data[pn]
-        for fnmr_key in ["fnmr_10pct"]:
-            erc_info = pdata.get("erc", {}).get(fnmr_key, {})
+        # Get curve data from main eval_data, summary from cross_data
+        curve_src = (eval_data or {}).get(pn, {})
+        cross_src = cross_data.get(pn, {})
+
+        for fnmr_key in ["fnmr_1pct"]:
+            # Plot actual ERC curves from main eval data
+            erc_curve = curve_src.get(fnmr_key, {})
+            rf = np.array(erc_curve.get("erc_reject_fracs", []))
+            fnmr = np.array(erc_curve.get("erc_fnmr", []))
+            random = np.array(erc_curve.get("random_baseline", [])) if "random_baseline" in erc_curve else None
+
+            if len(rf) > 0 and len(fnmr) > 0:
+                ax.plot(rf, fnmr, color=PROVIDER_COLORS.get(pn, "blue"),
+                        linewidth=2, label=f"VQI-{score_label} quality ordering")
+                if random is not None and len(random) > 0:
+                    ax.plot(rf, random, "--", color="gray", linewidth=1, label="Random baseline")
+
+            # Get summary stats from cross_data
+            erc_info = cross_src.get("erc", {}).get(fnmr_key, {})
             reductions = erc_info.get("reductions", {})
             red_20 = reductions.get("0.2", {}).get("fnmr_reduction_pct", 0)
             mono = erc_info.get("monotonic", "?")
-            ax.text(0.5, 0.9, f"FNMR red@20%: {red_20:.1f}%\nMonotonic: {mono}",
+            ax.text(0.95, 0.95, f"FNMR red@20%: {red_20:.1f}%\nMonotonic: {mono}",
                     transform=ax.transAxes, fontsize=9, verticalalignment="top",
+                    horizontalalignment="right",
                     bbox=dict(facecolor="lightyellow", alpha=0.8))
 
         ax.set_title(f"{PROVIDER_SHORT.get(pn, pn)} (unseen)")
         ax.set_xlabel("Rejection Fraction")
         ax.set_ylabel("FNMR")
+        ax.set_xlim(0, 0.5)
+        ax.legend(fontsize=8, loc="lower left")
         ax.grid(True, alpha=0.3)
 
     verdict = cross_data.get("_verdict", {})
     passed = verdict.get("passed", "?")
-    fig.suptitle(f"Cross-System Generalization {PCA_LABEL} (VQI-{score_label}) — {'PASS' if passed else 'FAIL'}",
-                 fontsize=14, y=1.02)
+    # Suptitle removed — provided by LaTeX caption
     fig.tight_layout()
     save_fig(fig, output_path)
 
@@ -273,9 +293,9 @@ def plot_det_separation_table(eval_data, output_path):
 def plot_timing_benchmark(output_path):
     """Plot 9: Speed benchmark stacked bar chart.
 
-    Benchmarks are model-independent; load from original data/test_scores/.
+    Benchmarks are model-independent; load from original data/step8/full_feature/test_scores/.
     """
-    bench_path = os.path.join(DATA_DIR, "test_scores", "benchmark_results.json")
+    bench_path = os.path.join(DATA_DIR, "step8", "full_feature", "test_scores", "benchmark_results.json")
     if not os.path.exists(bench_path):
         logger.warning("  Benchmark results not found, skipping timing plot")
         return
@@ -358,7 +378,7 @@ def plot_combined_erc_comparison(combined_data, output_path):
         ax.legend(fontsize=7)
         ax.grid(True, alpha=0.3)
 
-    fig.suptitle(f"Combined ERC Comparison {PCA_LABEL} — Dual-Score Rejection Strategies", fontsize=13, y=1.02)
+    # Suptitle removed — provided by LaTeX caption
     fig.tight_layout()
     save_fig(fig, output_path)
 
@@ -382,7 +402,7 @@ def plot_quadrant_eer_comparison(quadrant_data, output_path):
     ax.set_xticks(x + 1.5 * width)
     ax.set_xticklabels([PROVIDER_SHORT.get(p, p) for p in providers], rotation=15)
     ax.set_ylabel("EER")
-    ax.set_title(f"Per-Quadrant EER Comparison {PCA_LABEL}")
+    # Title removed — provided by LaTeX caption
     ax.legend()
     ax.grid(True, alpha=0.3, axis="y")
     save_fig(fig, output_path)
@@ -588,7 +608,7 @@ def write_analysis_v(eval_v_data, combined_data, quadrant_data, dataset, output_
     logger.info(f"  Saved: {output_path}")
 
 
-def plot_cross_system_ranked_det(eval_data, dataset, data_dir, output_path, prefix=""):
+def plot_cross_system_ranked_det(eval_data, dataset, data_dir, output_path, prefix="", suffix="_pca90"):
     """Plot 6: Cross-system ranked DET for P4/P5 only."""
     test_providers = ["P4_XVECTOR", "P5_WAVLM"]
     providers = [p for p in test_providers if p in eval_data]
@@ -604,7 +624,7 @@ def plot_cross_system_ranked_det(eval_data, dataset, data_dir, output_path, pref
         det_info = eval_data[pn].get("ranked_det", {})
 
         for gname in ["bottom", "middle", "top"]:
-            det_file = os.path.join(data_dir, f"det{prefix}_{dataset}_{pn}_{gname}.npz")
+            det_file = os.path.join(data_dir, f"det{prefix}_{dataset}_{pn}_{gname}{suffix}.npz")
             if os.path.exists(det_file):
                 data = np.load(det_file)
                 fmr = data["fmr"]
@@ -913,7 +933,7 @@ def plot_erc_by_dataset(datasets, output_path):
         ax.legend(fontsize=7)
         ax.grid(True, alpha=0.3)
 
-    fig.suptitle(f"ERC by Dataset {PCA_LABEL} (FNMR=10%)", fontsize=14, y=1.02)
+    # Suptitle removed — provided by LaTeX caption
     fig.tight_layout()
     save_fig(fig, output_path)
 
@@ -948,26 +968,26 @@ def plot_erc_ridgeline_across_datasets(datasets, output_path):
 
 def main():
     parser = argparse.ArgumentParser(description="Step 8 PCA-90% Visualization")
-    parser.add_argument("--dataset", required=True, choices=["voxceleb1", "vctk", "cnceleb", "all"])
+    parser.add_argument("--dataset", required=True, choices=["voxceleb1", "vctk", "cnceleb", "vpqad", "vseadc", "all"])
     args = parser.parse_args()
 
     if args.dataset == "all":
         # Generate per-dataset plots for each available dataset
-        for ds in ["voxceleb1", "vctk", "cnceleb"]:
-            eval_path = os.path.join(DATA_DIR, "step8_eval_pca90", ds, "vqi_s", f"vqi_s_evaluation_{ds}.json")
+        for ds in ["voxceleb1", "vctk", "cnceleb", "vpqad", "vseadc"]:
+            eval_path = os.path.join(DATA_DIR, "step8", "pca90", "step8_eval_pca90", ds, "vqi_s", f"vqi_s_evaluation_{ds}.json")
             if os.path.exists(eval_path):
                 logger.info(f"\n=== Generating PCA-90% plots for {ds} ===")
                 _generate_per_dataset(ds)
 
         # Generate multi-dataset plots
         multi_s_data = {}
-        for ds in ["voxceleb1", "vctk", "cnceleb"]:
-            eval_path = os.path.join(DATA_DIR, "step8_eval_pca90", ds, "vqi_s", f"vqi_s_evaluation_{ds}.json")
+        for ds in ["voxceleb1", "vctk", "cnceleb", "vpqad", "vseadc"]:
+            eval_path = os.path.join(DATA_DIR, "step8", "pca90", "step8_eval_pca90", ds, "vqi_s", f"vqi_s_evaluation_{ds}.json")
             if os.path.exists(eval_path):
                 multi_s_data[ds] = load_json(eval_path)
 
         if len(multi_s_data) >= 2:
-            report_s_dir = os.path.join(REPORTS_DIR, "step8_pca90", "cross_dataset")
+            report_s_dir = os.path.join(REPORTS_DIR, "step8", "pca90", "cross_dataset")
             os.makedirs(report_s_dir, exist_ok=True)
             logger.info("\n=== Generating PCA-90% cross-dataset plots ===")
             plot_erc_by_dataset(multi_s_data, os.path.join(report_s_dir, "erc_by_dataset_pca90.png"))
@@ -984,14 +1004,14 @@ def main():
 
 def _generate_per_dataset(dataset):
     """Generate all per-dataset visualizations for PCA-90% models."""
-    eval_base = os.path.join(DATA_DIR, "step8_eval_pca90", dataset)
+    eval_base = os.path.join(DATA_DIR, "step8", "pca90", "step8_eval_pca90", dataset)
     eval_s_dir = os.path.join(eval_base, "vqi_s")
     eval_v_dir = os.path.join(eval_base, "vqi_v")
     cross_dir = os.path.join(eval_base, "cross_system")
     dual_dir = os.path.join(eval_base, "dual_score")
 
-    report_s_dir = os.path.join(REPORTS_DIR, "step8_pca90", dataset)
-    report_v_dir = os.path.join(REPORTS_DIR, "step8_pca90_v", dataset)
+    report_s_dir = os.path.join(REPORTS_DIR, "step8", "pca90", dataset)
+    report_v_dir = os.path.join(REPORTS_DIR, "step8", "pca90_v", dataset)
     os.makedirs(report_s_dir, exist_ok=True)
     os.makedirs(report_v_dir, exist_ok=True)
 
@@ -1002,7 +1022,7 @@ def _generate_per_dataset(dataset):
     cross_v_path = os.path.join(cross_dir, f"cross_system_vqi_v_{dataset}.json")
     combined_path = os.path.join(dual_dir, f"combined_erc_{dataset}.json")
     quadrant_path = os.path.join(dual_dir, f"quadrant_analysis_{dataset}.json")
-    bench_path = os.path.join(DATA_DIR, "test_scores", "benchmark_results.json")
+    bench_path = os.path.join(DATA_DIR, "step8", "full_feature", "test_scores", "benchmark_results.json")
 
     eval_s_data = load_json(eval_s_path) if os.path.exists(eval_s_path) else {}
     eval_v_data = load_json(eval_v_path) if os.path.exists(eval_v_path) else {}
@@ -1050,14 +1070,15 @@ def _generate_per_dataset(dataset):
     # 5. Cross-system ERC
     if cross_s_data:
         plot_cross_system_erc(cross_s_data,
-                              os.path.join(report_s_dir, "cross_system_erc_pca90.png"), "S")
+                              os.path.join(report_s_dir, "cross_system_erc_pca90.png"), "S",
+                              eval_data=eval_s_data)
 
     # 6. Cross-system ranked DET
     if eval_s_data and cross_s_data:
         plot_cross_system_ranked_det(eval_s_data, dataset, eval_s_dir,
                                      os.path.join(report_s_dir, "cross_system_ranked_det_pca90.png"))
 
-    # 9. Timing benchmark (loaded from original data/test_scores/)
+    # 9. Timing benchmark (loaded from original data/step8/full_feature/test_scores/)
     plot_timing_benchmark(os.path.join(report_s_dir, "timing_benchmark_pca90.png"))
 
     # 15. Analysis.md
@@ -1080,7 +1101,8 @@ def _generate_per_dataset(dataset):
     # 18. Cross-system V ERC
     if cross_v_data:
         plot_cross_system_erc(cross_v_data,
-                              os.path.join(report_v_dir, "cross_system_v_erc_pca90.png"), "V")
+                              os.path.join(report_v_dir, "cross_system_v_erc_pca90.png"), "V",
+                              eval_data=eval_v_data)
 
         # Cross-system V ranked DET
         if eval_v_data:
@@ -1104,8 +1126,8 @@ def _generate_per_dataset(dataset):
 
         # 22. Quadrant score distributions
         # VQI scores come from PCA-90% scoring pipeline
-        vqi_scores_path = os.path.join(DATA_DIR, "test_scores", f"vqi_scores_test_{dataset}.csv")
-        pair_scores_path = os.path.join(DATA_DIR, "test_scores", f"pair_scores_{dataset}_P1_ECAPA.csv")
+        vqi_scores_path = os.path.join(DATA_DIR, "step8", "full_feature", "test_scores", f"vqi_scores_test_{dataset}.csv")
+        pair_scores_path = os.path.join(DATA_DIR, "step8", "full_feature", "test_scores", f"pair_scores_{dataset}_P1_ECAPA.csv")
         plot_quadrant_score_distributions(vqi_scores_path, pair_scores_path, dataset,
                                           os.path.join(report_v_dir, "quadrant_score_distributions_pca90.png"))
 

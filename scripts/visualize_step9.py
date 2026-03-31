@@ -21,7 +21,7 @@ import numpy as np
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
 
-REPORTS_DIR = os.path.join(BASE_DIR, "reports", "step9")
+REPORTS_DIR = os.path.join(BASE_DIR, "reports", "step9", "v1")
 CONF_DIR = os.path.join(BASE_DIR, "conformance")
 os.makedirs(REPORTS_DIR, exist_ok=True)
 

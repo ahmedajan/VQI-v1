@@ -265,7 +265,7 @@ def plot_det_separation_table(eval_data, output_path):
 
 def plot_timing_benchmark(output_path):
     """Plot 9: Speed benchmark stacked bar chart."""
-    bench_path = os.path.join(DATA_DIR, "test_scores", "benchmark_results.json")
+    bench_path = os.path.join(DATA_DIR, "step8", "full_feature", "test_scores", "benchmark_results.json")
     if not os.path.exists(bench_path):
         logger.warning("  Benchmark results not found, skipping timing plot")
         return
@@ -640,11 +640,17 @@ def plot_provider_performance_radar(eval_data, output_path):
         red_20 = pdata.get("fnmr_10pct", {}).get("reductions", {}).get("0.2", {}).get("fnmr_reduction_pct", 0)
         det = pdata.get("ranked_det", {})
         det_sep = det.get("eer_separation", 1.0)
+        if det_sep is None:
+            det_sep = 1.0
         eer_top = det.get("top", {}).get("eer", 0.5)
+        if eer_top is None:
+            eer_top = 0.5
         eer_bottom = det.get("bottom", {}).get("eer", 0.5)
+        if eer_bottom is None:
+            eer_bottom = 0.5
 
         values = [
-            min(red_20 / 30.0, 1.0),
+            min(max(red_20, 0) / 30.0, 1.0),
             min(det_sep / 3.0, 1.0),
             1.0 - eer_top,
             1.0 - eer_bottom,
@@ -938,26 +944,26 @@ def plot_erc_ridgeline_across_datasets(datasets, output_path):
 
 def main():
     parser = argparse.ArgumentParser(description="Step 8 Visualization")
-    parser.add_argument("--dataset", required=True, choices=["voxceleb1", "vctk", "cnceleb", "all"])
+    parser.add_argument("--dataset", required=True, choices=["voxceleb1", "vctk", "cnceleb", "vpqad", "vseadc", "all"])
     args = parser.parse_args()
 
     if args.dataset == "all":
         # Generate per-dataset plots for each available dataset
-        for ds in ["voxceleb1", "vctk", "cnceleb"]:
-            eval_path = os.path.join(DATA_DIR, "step8_eval", ds, "vqi_s", f"vqi_s_evaluation_{ds}.json")
+        for ds in ["voxceleb1", "vctk", "cnceleb", "vpqad", "vseadc"]:
+            eval_path = os.path.join(DATA_DIR, "step8", "full_feature", "step8_eval", ds, "vqi_s", f"vqi_s_evaluation_{ds}.json")
             if os.path.exists(eval_path):
                 logger.info(f"\n=== Generating plots for {ds} ===")
                 _generate_per_dataset(ds)
 
         # Generate multi-dataset plots
         multi_s_data = {}
-        for ds in ["voxceleb1", "vctk", "cnceleb"]:
-            eval_path = os.path.join(DATA_DIR, "step8_eval", ds, "vqi_s", f"vqi_s_evaluation_{ds}.json")
+        for ds in ["voxceleb1", "vctk", "cnceleb", "vpqad", "vseadc"]:
+            eval_path = os.path.join(DATA_DIR, "step8", "full_feature", "step8_eval", ds, "vqi_s", f"vqi_s_evaluation_{ds}.json")
             if os.path.exists(eval_path):
                 multi_s_data[ds] = load_json(eval_path)
 
         if len(multi_s_data) >= 2:
-            report_s_dir = os.path.join(REPORTS_DIR, "step8", "cross_dataset")
+            report_s_dir = os.path.join(REPORTS_DIR, "step8", "full_feature", "cross_dataset")
             os.makedirs(report_s_dir, exist_ok=True)
             logger.info("\n=== Generating cross-dataset plots ===")
             plot_erc_by_dataset(multi_s_data, os.path.join(report_s_dir, "erc_by_dataset.png"))
@@ -974,14 +980,14 @@ def main():
 
 def _generate_per_dataset(dataset):
     """Generate all per-dataset visualizations."""
-    eval_base = os.path.join(DATA_DIR, "step8_eval", dataset)
+    eval_base = os.path.join(DATA_DIR, "step8", "full_feature", "step8_eval", dataset)
     eval_s_dir = os.path.join(eval_base, "vqi_s")
     eval_v_dir = os.path.join(eval_base, "vqi_v")
     cross_dir = os.path.join(eval_base, "cross_system")
     dual_dir = os.path.join(eval_base, "dual_score")
 
-    report_s_dir = os.path.join(REPORTS_DIR, "step8", dataset)
-    report_v_dir = os.path.join(REPORTS_DIR, "step8_v", dataset)
+    report_s_dir = os.path.join(REPORTS_DIR, "step8", "full_feature", dataset)
+    report_v_dir = os.path.join(REPORTS_DIR, "step8", "full_feature_v", dataset)
     os.makedirs(report_s_dir, exist_ok=True)
     os.makedirs(report_v_dir, exist_ok=True)
 
@@ -992,7 +998,7 @@ def _generate_per_dataset(dataset):
     cross_v_path = os.path.join(cross_dir, f"cross_system_vqi_v_{dataset}.json")
     combined_path = os.path.join(dual_dir, f"combined_erc_{dataset}.json")
     quadrant_path = os.path.join(dual_dir, f"quadrant_analysis_{dataset}.json")
-    bench_path = os.path.join(DATA_DIR, "test_scores", "benchmark_results.json")
+    bench_path = os.path.join(DATA_DIR, "step8", "full_feature", "test_scores", "benchmark_results.json")
 
     eval_s_data = load_json(eval_s_path) if os.path.exists(eval_s_path) else {}
     eval_v_data = load_json(eval_v_path) if os.path.exists(eval_v_path) else {}
@@ -1093,8 +1099,8 @@ def _generate_per_dataset(dataset):
                                      os.path.join(report_v_dir, "quadrant_eer_comparison.png"))
 
         # 22. Quadrant score distributions
-        vqi_scores_path = os.path.join(DATA_DIR, "test_scores", f"vqi_scores_test_{dataset}.csv")
-        pair_scores_path = os.path.join(DATA_DIR, "test_scores", f"pair_scores_{dataset}_P1_ECAPA.csv")
+        vqi_scores_path = os.path.join(DATA_DIR, "step8", "full_feature", "test_scores", f"vqi_scores_test_{dataset}.csv")
+        pair_scores_path = os.path.join(DATA_DIR, "step8", "full_feature", "test_scores", f"pair_scores_{dataset}_P1_ECAPA.csv")
         plot_quadrant_score_distributions(vqi_scores_path, pair_scores_path, dataset,
                                           os.path.join(report_v_dir, "quadrant_score_distributions.png"))
 

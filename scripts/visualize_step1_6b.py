@@ -21,8 +21,8 @@ import matplotlib.pyplot as plt
 from scipy.stats import spearmanr
 
 OUTPUT_DIR = r"D:\VQI\implementation\reports"
-SCORES_DIR = r"D:\VQI\implementation\data\provider_scores"
-INDEX_CSV = r"D:\VQI\implementation\data\embeddings\train_pool_index.csv"
+SCORES_DIR = r"D:\VQI\implementation\data\step1\provider_scores"
+INDEX_CSV = r"D:\VQI\implementation\data\step1\embeddings\train_pool_index.csv"
 
 PROVIDERS = ["P1_ECAPA", "P2_RESNET", "P3_ECAPA2"]
 SHORT = {"P1_ECAPA": "ecapa", "P2_RESNET": "resnet", "P3_ECAPA2": "ecapa2"}

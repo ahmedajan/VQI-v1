@@ -39,10 +39,10 @@ plt.rcParams.update({
 def load_data(score_type):
     """Load all training outputs for a score type."""
     if score_type == "s":
-        train_dir = os.path.join(PROJECT_ROOT, "data", "training")
+        train_dir = os.path.join(PROJECT_ROOT, "data", "step6", "full_feature", "training")
         model_path = os.path.join(PROJECT_ROOT, "models", "vqi_rf_model.joblib")
     else:
-        train_dir = os.path.join(PROJECT_ROOT, "data", "training_v")
+        train_dir = os.path.join(PROJECT_ROOT, "data", "step6", "full_feature", "training_v")
         model_path = os.path.join(PROJECT_ROOT, "models", "vqi_v_rf_model.joblib")
 
     X = np.load(os.path.join(train_dir, "X_train.npy"))
@@ -187,7 +187,6 @@ def plot_feature_importance_top20(data, prefix, suffix=""):
     ax.set_yticks(range(20))
     ax.set_yticklabels(df["feature"].values[::-1], fontsize=8)
     ax.set_xlabel("Importance")
-    ax.set_title(f"{prefix} Top 20 Feature Importances")
     path = os.path.join(REPORT_DIR, f"rf{suffix}_feature_importance_top20.png")
     fig.savefig(path)
     plt.close(fig)

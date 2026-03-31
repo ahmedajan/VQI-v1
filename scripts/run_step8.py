@@ -43,12 +43,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 DATA_DIR = os.path.join(_IMPL_DIR, "data")
-FEATURES_DIR = os.path.join(DATA_DIR, "features")
-EMBEDDINGS_DIR = os.path.join(DATA_DIR, "embeddings")
-SCORES_DIR = os.path.join(DATA_DIR, "test_scores")
+FEATURES_DIR = os.path.join(DATA_DIR, "step4", "features")
+EMBEDDINGS_DIR = os.path.join(DATA_DIR, "step1", "embeddings")
+SCORES_DIR = os.path.join(DATA_DIR, "step8", "full_feature", "test_scores")
 MODELS_DIR = os.path.join(_IMPL_DIR, "models")
-EVAL_DIR = os.path.join(DATA_DIR, "evaluation")
-EVAL_V_DIR = os.path.join(DATA_DIR, "evaluation_v")
+EVAL_DIR = os.path.join(DATA_DIR, "step5", "evaluation")
+EVAL_V_DIR = os.path.join(DATA_DIR, "step5", "evaluation_v")
 REPORTS_DIR = os.path.join(_IMPL_DIR, "reports")
 
 ALL_PROVIDERS = ["P1_ECAPA", "P2_RESNET", "P3_ECAPA2", "P4_XVECTOR", "P5_WAVLM"]
@@ -57,6 +57,8 @@ DATASET_TO_SPLIT = {
     "voxceleb1": "test_voxceleb1",
     "vctk": "test_vctk",
     "cnceleb": "test_cnceleb",
+    "vpqad": "test_vpqad",
+    "vseadc": "test_vseadc",
 }
 
 
@@ -537,7 +539,7 @@ def phase_e_dual_score(data, dataset, output_dir):
 
 def main():
     parser = argparse.ArgumentParser(description="Step 8: Evaluation of Predictive Power")
-    parser.add_argument("--dataset", required=True, choices=["voxceleb1", "vctk", "cnceleb"])
+    parser.add_argument("--dataset", required=True, choices=["voxceleb1", "vctk", "cnceleb", "vpqad", "vseadc"])
     parser.add_argument("--skip-extraction", action="store_true",
                         help="Skip Phase A (data extraction)")
     parser.add_argument("--skip-s", action="store_true", help="Skip Phase B (VQI-S)")
@@ -552,16 +554,16 @@ def main():
     split_name = DATASET_TO_SPLIT[dataset]
 
     # Output directories
-    eval_s_dir = os.path.join(DATA_DIR, "step8_eval", dataset, "vqi_s")
-    eval_v_dir = os.path.join(DATA_DIR, "step8_eval", dataset, "vqi_v")
-    eval_cross_dir = os.path.join(DATA_DIR, "step8_eval", dataset, "cross_system")
-    eval_dual_dir = os.path.join(DATA_DIR, "step8_eval", dataset, "dual_score")
+    eval_s_dir = os.path.join(DATA_DIR, "step8", "full_feature", "step8_eval", dataset, "vqi_s")
+    eval_v_dir = os.path.join(DATA_DIR, "step8", "full_feature", "step8_eval", dataset, "vqi_v")
+    eval_cross_dir = os.path.join(DATA_DIR, "step8", "full_feature", "step8_eval", dataset, "cross_system")
+    eval_dual_dir = os.path.join(DATA_DIR, "step8", "full_feature", "step8_eval", dataset, "dual_score")
 
     for d in [eval_s_dir, eval_v_dir, eval_cross_dir, eval_dual_dir, SCORES_DIR]:
         os.makedirs(d, exist_ok=True)
 
     # Checkpoint
-    checkpoint_path = os.path.join(DATA_DIR, "step8_eval", dataset, "_checkpoint.json")
+    checkpoint_path = os.path.join(DATA_DIR, "step8", "full_feature", "step8_eval", dataset, "_checkpoint.json")
     os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
     completed_phases = set()
     if args.resume and os.path.exists(checkpoint_path):

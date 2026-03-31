@@ -22,9 +22,9 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-EVAL_S = os.path.join(PROJECT_ROOT, "data", "evaluation")
-EVAL_V = os.path.join(PROJECT_ROOT, "data", "evaluation_v")
-FEATURES_DIR = os.path.join(PROJECT_ROOT, "data", "features")
+EVAL_S = os.path.join(PROJECT_ROOT, "data", "step5", "evaluation")
+EVAL_V = os.path.join(PROJECT_ROOT, "data", "step5", "evaluation_v")
+FEATURES_DIR = os.path.join(PROJECT_ROOT, "data", "step4", "features")
 REPORTS = os.path.join(PROJECT_ROOT, "reports", "step5")
 
 
@@ -218,7 +218,7 @@ def plot_selection_funnel(data, out_dir):
     ax.set_xticks(range(len(stages)))
     ax.set_xticklabels(stages, fontsize=9)
     ax.set_ylabel("Feature Count")
-    ax.set_title("VQI-S: Feature Selection Funnel")
+    ax.set_title("VQI-S")
     plt.tight_layout()
     fig.savefig(os.path.join(out_dir, "selection_stage_funnel.png"), dpi=150)
     plt.close(fig)
@@ -246,7 +246,7 @@ def plot_gini_lollipop(data, out_dir):
 def plot_parallel_coordinates(data, out_dir):
     """Plot 9: Parallel coordinates for top 10 features, 200 samples."""
     X_s = np.load(os.path.join(FEATURES_DIR, "features_s_train.npy"))
-    train_df = pd.read_csv(os.path.join(PROJECT_ROOT, "data", "training_set_final.csv"))
+    train_df = pd.read_csv(os.path.join(PROJECT_ROOT, "data", "step2", "training_set_final.csv"))
     labels = train_df["label"].values
 
     top10 = data["importance_s"].sort_values("importance", ascending=False).head(10)
@@ -464,7 +464,7 @@ def plot_selection_v_funnel(data, out_dir):
     ax.set_xticks(range(len(stages)))
     ax.set_xticklabels(stages, fontsize=9)
     ax.set_ylabel("Feature Count")
-    ax.set_title("VQI-V: Feature Selection Funnel")
+    ax.set_title("VQI-V")
     plt.tight_layout()
     fig.savefig(os.path.join(out_dir, "selection_v_stage_funnel.png"), dpi=150)
     plt.close(fig)

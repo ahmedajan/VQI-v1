@@ -10,7 +10,7 @@ import torchaudio
 
 from .base import SpeakerProvider
 
-SAVEDIR = "implementation/data/pretrained/p4_xvector"
+SAVEDIR = "implementation/data/step1/pretrained/p4_xvector"
 
 
 class P4_XVECTOR(SpeakerProvider):

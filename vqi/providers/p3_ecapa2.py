@@ -15,7 +15,7 @@ import torchaudio
 
 from .base import SpeakerProvider
 
-CACHE_DIR = "implementation/data/pretrained/p3_ecapa2"
+CACHE_DIR = "implementation/data/step1/pretrained/p3_ecapa2"
 
 
 class P3_ECAPA2(SpeakerProvider):

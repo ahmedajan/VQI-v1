@@ -33,10 +33,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 DATA_DIR = os.path.join(_IMPL_DIR, "data")
-EMBEDDINGS_DIR = os.path.join(DATA_DIR, "embeddings")
-COHORT_DIR = os.path.join(DATA_DIR, "snorm_cohort")
-SPLITS_DIR = os.path.join(DATA_DIR, "splits")
-OUTPUT_DIR = os.path.join(DATA_DIR, "test_scores")
+EMBEDDINGS_DIR = os.path.join(DATA_DIR, "step1", "embeddings")
+COHORT_DIR = os.path.join(DATA_DIR, "step1", "snorm_cohort")
+SPLITS_DIR = os.path.join(DATA_DIR, "step1", "splits")
+OUTPUT_DIR = os.path.join(DATA_DIR, "step8", "full_feature", "test_scores")
 
 PROVIDER_DIMS = {
     "P1_ECAPA": 192,
@@ -50,9 +50,14 @@ DATASET_TO_SPLIT = {
     "voxceleb1": "test_voxceleb1",
     "vctk": "test_vctk",
     "cnceleb": "test_cnceleb",
+    "vpqad": "test_vpqad",
+    "vseadc": "test_vseadc",
 }
 
 N_PAIRS_GENERATED = 50000  # per class for VCTK/CN-Celeb
+
+# Small datasets: use exhaustive genuine pairs instead of random sampling
+SMALL_DATASETS = {"vpqad", "vseadc"}
 
 
 def l2_normalize(x):
@@ -181,6 +186,58 @@ def generate_pairs(speaker_ids, n_genuine=50000, n_impostor=50000, seed=42):
     return pairs, labels
 
 
+def generate_exhaustive_pairs(speaker_ids, seed=42):
+    """Generate ALL C(n,2) genuine pairs per speaker + equal impostor pairs.
+
+    For small datasets where 50K pairs would exceed available combinations.
+
+    Args:
+        speaker_ids: list of speaker IDs per sample.
+        seed: random seed for impostor pair sampling.
+
+    Returns:
+        (pairs, labels) arrays.
+    """
+    from itertools import combinations
+
+    rng = np.random.RandomState(seed)
+
+    # Build speaker -> indices mapping
+    speaker_to_indices = {}
+    for i, spk in enumerate(speaker_ids):
+        if spk not in speaker_to_indices:
+            speaker_to_indices[spk] = []
+        speaker_to_indices[spk].append(i)
+
+    # Generate ALL genuine pairs (C(n,2) per speaker)
+    genuine_pairs = []
+    for spk, idxs in speaker_to_indices.items():
+        if len(idxs) >= 2:
+            for i, j in combinations(idxs, 2):
+                genuine_pairs.append((i, j))
+
+    n_genuine = len(genuine_pairs)
+    logger.info(f"Exhaustive genuine pairs: {n_genuine}")
+
+    # Generate equal number of impostor pairs
+    all_speakers = list(speaker_to_indices.keys())
+    impostor_pairs = []
+    attempts = 0
+    max_attempts = n_genuine * 20
+    while len(impostor_pairs) < n_genuine and attempts < max_attempts:
+        spk1, spk2 = rng.choice(all_speakers, size=2, replace=False)
+        idx1 = rng.choice(speaker_to_indices[spk1])
+        idx2 = rng.choice(speaker_to_indices[spk2])
+        impostor_pairs.append((idx1, idx2))
+        attempts += 1
+
+    pairs = np.array(genuine_pairs + impostor_pairs, dtype=int)
+    labels = np.array([1] * len(genuine_pairs) + [0] * len(impostor_pairs), dtype=int)
+
+    logger.info(f"Generated {len(genuine_pairs)} genuine + {len(impostor_pairs)} impostor pairs (exhaustive)")
+    return pairs, labels
+
+
 def compute_pair_scores(embeddings, pairs, cohort_embs=None):
     """Compute cosine similarity for pairs, optionally with S-norm.
 
@@ -232,7 +289,7 @@ def compute_pair_scores(embeddings, pairs, cohort_embs=None):
 
 def main():
     parser = argparse.ArgumentParser(description="Compute test pair scores")
-    parser.add_argument("--dataset", required=True, choices=["voxceleb1", "vctk", "cnceleb"])
+    parser.add_argument("--dataset", required=True, choices=["voxceleb1", "vctk", "cnceleb", "vpqad", "vseadc"])
     parser.add_argument("--providers", nargs="+", required=True)
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
@@ -277,6 +334,8 @@ def main():
             logger.error("Download veri_test2.txt from VoxCeleb website.")
             sys.exit(1)
         pairs, labels = load_voxceleb1_pairs(pairs_path, filename_to_idx)
+    elif args.dataset in SMALL_DATASETS:
+        pairs, labels = generate_exhaustive_pairs(speaker_ids, seed=42)
     else:
         pairs, labels = generate_pairs(speaker_ids, N_PAIRS_GENERATED, N_PAIRS_GENERATED, seed=42)
 

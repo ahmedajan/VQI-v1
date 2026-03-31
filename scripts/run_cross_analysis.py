@@ -37,30 +37,30 @@ logger = logging.getLogger(__name__)
 # Paths
 # ---------------------------------------------------------------------------
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
-OUTPUT_DIR = os.path.join(DATA_DIR, "cross_analysis")
+OUTPUT_DIR = os.path.join(DATA_DIR, "step7", "cross_validation", "cross_analysis")
 
-X_S_PATH = os.path.join(DATA_DIR, "training", "X_train.npy")
-X_V_PATH = os.path.join(DATA_DIR, "training_v", "X_train.npy")
-Y_PATH = os.path.join(DATA_DIR, "training", "y_train.npy")
-S_NAMES_PATH = os.path.join(DATA_DIR, "training", "feature_names.txt")
-V_NAMES_PATH = os.path.join(DATA_DIR, "training_v", "feature_names.txt")
-IMP_S_CSV = os.path.join(DATA_DIR, "training", "feature_importances.csv")
-IMP_V_CSV = os.path.join(DATA_DIR, "training_v", "feature_importances.csv")
+X_S_PATH = os.path.join(DATA_DIR, "step6", "full_feature", "training", "X_train.npy")
+X_V_PATH = os.path.join(DATA_DIR, "step6", "full_feature", "training_v", "X_train.npy")
+Y_PATH = os.path.join(DATA_DIR, "step6", "full_feature", "training", "y_train.npy")
+S_NAMES_PATH = os.path.join(DATA_DIR, "step6", "full_feature", "training", "feature_names.txt")
+V_NAMES_PATH = os.path.join(DATA_DIR, "step6", "full_feature", "training_v", "feature_names.txt")
+IMP_S_CSV = os.path.join(DATA_DIR, "step6", "full_feature", "training", "feature_importances.csv")
+IMP_V_CSV = os.path.join(DATA_DIR, "step6", "full_feature", "training_v", "feature_importances.csv")
 MODEL_S_PATH = os.path.join(PROJECT_ROOT, "models", "vqi_rf_model.joblib")
 MODEL_V_PATH = os.path.join(PROJECT_ROOT, "models", "vqi_v_rf_model.joblib")
 
 # Validation data paths
-FEATURES_S_VAL = os.path.join(DATA_DIR, "features", "features_s_val.npy")
-FEATURES_V_VAL = os.path.join(DATA_DIR, "features", "features_v_val.npy")
-FEATURE_NAMES_S_JSON = os.path.join(DATA_DIR, "features", "feature_names_s.json")
-FEATURE_NAMES_V_JSON = os.path.join(DATA_DIR, "features", "feature_names_v.json")
-SELECTED_S_TXT = os.path.join(DATA_DIR, "evaluation", "selected_features.txt")
-SELECTED_V_TXT = os.path.join(DATA_DIR, "evaluation_v", "selected_features.txt")
+FEATURES_S_VAL = os.path.join(DATA_DIR, "step4", "features", "features_s_val.npy")
+FEATURES_V_VAL = os.path.join(DATA_DIR, "step4", "features", "features_v_val.npy")
+FEATURE_NAMES_S_JSON = os.path.join(DATA_DIR, "step4", "features", "feature_names_s.json")
+FEATURE_NAMES_V_JSON = os.path.join(DATA_DIR, "step4", "features", "feature_names_v.json")
+SELECTED_S_TXT = os.path.join(DATA_DIR, "step5", "evaluation", "selected_features.txt")
+SELECTED_V_TXT = os.path.join(DATA_DIR, "step5", "evaluation_v", "selected_features.txt")
 
 # Optional: validation labels
-THRESHOLDS_YAML = os.path.join(DATA_DIR, "splits", "label_thresholds.yaml")
-VALIDATION_CSV = os.path.join(DATA_DIR, "splits", "validation_set.csv")
-PROVIDER_SCORES_DIR = os.path.join(DATA_DIR, "scores")
+THRESHOLDS_YAML = os.path.join(DATA_DIR, "step2", "label_thresholds.yaml")
+VALIDATION_CSV = os.path.join(DATA_DIR, "step2", "validation_set.csv")
+PROVIDER_SCORES_DIR = os.path.join(DATA_DIR, "step1", "provider_scores")
 
 CHECKPOINT_PATH = os.path.join(OUTPUT_DIR, "_checkpoint_cross_analysis.yaml")
 

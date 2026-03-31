@@ -42,8 +42,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 DATA_DIR = os.path.join(_IMPL_DIR, "data")
-SPLITS_DIR = os.path.join(DATA_DIR, "splits")
-FEATURES_DIR = os.path.join(DATA_DIR, "features")
+SPLITS_DIR = os.path.join(DATA_DIR, "step1", "splits")
+FEATURES_DIR = os.path.join(DATA_DIR, "step4", "features")
 
 
 def main():

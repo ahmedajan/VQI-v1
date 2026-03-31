@@ -43,12 +43,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 DATA_DIR = os.path.join(_IMPL_DIR, "data")
-FEATURES_DIR = os.path.join(DATA_DIR, "features")
-SPLITS_DIR = os.path.join(DATA_DIR, "splits")
+FEATURES_DIR = os.path.join(DATA_DIR, "step4", "features")
+SPLITS_DIR = os.path.join(DATA_DIR, "step1", "splits")
 MODELS_DIR = os.path.join(_IMPL_DIR, "models")
-EVAL_DIR = os.path.join(DATA_DIR, "evaluation")
-EVAL_V_DIR = os.path.join(DATA_DIR, "evaluation_v")
-OUTPUT_DIR = os.path.join(DATA_DIR, "test_scores")
+EVAL_DIR = os.path.join(DATA_DIR, "step5", "evaluation")
+EVAL_V_DIR = os.path.join(DATA_DIR, "step5", "evaluation_v")
+OUTPUT_DIR = os.path.join(DATA_DIR, "step8", "full_feature", "test_scores")
 
 
 def main():

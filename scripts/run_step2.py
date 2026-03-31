@@ -40,10 +40,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Paths
-SCORE_DIR = PROJECT_ROOT / "data" / "provider_scores"
-LABELS_DIR = PROJECT_ROOT / "data" / "labels"
-DATA_DIR = PROJECT_ROOT / "data"
-SPLITS_DIR = PROJECT_ROOT / "data" / "splits"
+SCORE_DIR = PROJECT_ROOT / "data" / "step1" / "provider_scores"
+LABELS_DIR = PROJECT_ROOT / "data" / "step2" / "labels"
+DATA_DIR = PROJECT_ROOT / "data" / "step2"
+SPLITS_DIR = PROJECT_ROOT / "data" / "step1" / "splits"
 STATS_JSON = SCORE_DIR / "score_statistics.json"
 
 # Outputs

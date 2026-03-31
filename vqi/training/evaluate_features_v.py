@@ -5,7 +5,7 @@ Thin wrapper around shared pipeline in evaluate_features.py with VQI-V parameter
   - 161 candidate features
   - Spearman acceptance: |rho| > 0.2
   - N_selected_V range: [15, 120]
-  - Outputs to data/evaluation_v/
+  - Outputs to data/step5/evaluation_v/
 """
 
 import logging

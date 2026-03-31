@@ -1,0 +1,4 @@
+provider,genuine_raw_count,genuine_raw_mean,genuine_raw_std,genuine_raw_min,genuine_raw_max,genuine_norm_mean,genuine_norm_std,impostor_raw_count,impostor_raw_mean,impostor_raw_std,impostor_norm_mean,impostor_norm_std,dprime_raw,dprime_snorm
+P1_ECAPA,1210451,0.8060,0.0985,-0.2504,0.9782,9.8367,1.3048,28158760,0.0169,0.0816,0.0022,0.9963,4.3796,4.2738
+P2_RESNET,1210451,0.7844,0.1075,-0.2717,0.9826,9.1790,1.3832,28158760,0.0141,0.0867,0.0092,0.9992,3.9656,3.8489
+P3_ECAPA2,1210451,0.8582,0.0963,-0.2883,0.9867,8.5217,1.1129,28158760,0.0140,0.1019,0.0044,1.0075,4.2585,4.0168

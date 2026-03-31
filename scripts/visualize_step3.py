@@ -48,7 +48,7 @@ from vqi.core.vqi_algorithm import check_actionable_feedback
 # Paths
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 REPORT_DIR = os.path.join(os.path.dirname(__file__), "..", "reports", "step3")
-DURATIONS_CSV = os.path.join(DATA_DIR, "labels", "train_pool_durations.csv")
+DURATIONS_CSV = os.path.join(DATA_DIR, "step2", "labels", "train_pool_durations.csv")
 
 os.makedirs(REPORT_DIR, exist_ok=True)
 

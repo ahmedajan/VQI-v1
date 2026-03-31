@@ -88,11 +88,11 @@ def setup_logging():
 
 
 def load_data(score_type):
-    """Load X_train, y_train from data/training/ or data/training_v/."""
+    """Load X_train, y_train from data/step6/full_feature/training/ or training_v/."""
     if score_type == "s":
-        data_dir = os.path.join(PROJECT_ROOT, "data", "training")
+        data_dir = os.path.join(PROJECT_ROOT, "data", "step6", "full_feature", "training")
     else:
-        data_dir = os.path.join(PROJECT_ROOT, "data", "training_v")
+        data_dir = os.path.join(PROJECT_ROOT, "data", "step6", "full_feature", "training_v")
 
     X = np.load(os.path.join(data_dir, "X_train.npy"))
     y = np.load(os.path.join(data_dir, "y_train.npy"))
@@ -254,7 +254,7 @@ def get_pca_paths(threshold, score_type):
     else:
         tag = f"pca{threshold}"
 
-    data_dir = os.path.join(PROJECT_ROOT, "data", f"training_{tag}{suffix}")
+    data_dir = os.path.join(PROJECT_ROOT, "data", "step6", "dimensionality_reduction", f"training_{tag}{suffix}")
     model_path = os.path.join(
         models_dir,
         f"vqi{'_v' if score_type == 'v' else ''}_rf_{tag}_model.joblib",
@@ -467,7 +467,7 @@ def main():
     args = parser.parse_args()
 
     setup_logging()
-    reports_dir = os.path.join(PROJECT_ROOT, "reports", "pca")
+    reports_dir = os.path.join(PROJECT_ROOT, "reports", "step6", "dimensionality_reduction")
     os.makedirs(reports_dir, exist_ok=True)
 
     if args.comparison:

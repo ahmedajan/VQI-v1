@@ -29,8 +29,8 @@ if PROJECT_ROOT not in sys.path:
 
 logger = logging.getLogger(__name__)
 
-DATA_DIR = os.path.join(PROJECT_ROOT, "data", "cross_analysis")
-REPORT_DIR = os.path.join(PROJECT_ROOT, "reports", "step7_cross")
+DATA_DIR = os.path.join(PROJECT_ROOT, "data", "step7", "cross_validation", "cross_analysis")
+REPORT_DIR = os.path.join(PROJECT_ROOT, "reports", "step7", "cross_validation")
 
 # Consistent style
 S_COLOR = "#1f77b4"  # blue
@@ -98,9 +98,9 @@ def plot_1_accuracy_comparison():
 # ====================================================================
 def plot_2_cross_corr_heatmap_top30():
     corr = np.load(os.path.join(DATA_DIR, "cross_corr_spearman.npy"))
-    with open(os.path.join(DATA_DIR, "..", "training", "feature_names.txt"), "r", encoding="utf-8") as f:
+    with open(os.path.join(PROJECT_ROOT, "data", "step6", "full_feature", "training", "feature_names.txt"), "r", encoding="utf-8") as f:
         s_names = [l.strip() for l in f if l.strip()]
-    with open(os.path.join(DATA_DIR, "..", "training_v", "feature_names.txt"), "r", encoding="utf-8") as f:
+    with open(os.path.join(PROJECT_ROOT, "data", "step6", "full_feature", "training_v", "feature_names.txt"), "r", encoding="utf-8") as f:
         v_names = [l.strip() for l in f if l.strip()]
 
     # Top-30 by max absolute correlation

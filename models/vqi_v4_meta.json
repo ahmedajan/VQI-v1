@@ -1,0 +1,12 @@
+{
+  "dr_config": "Full (430/133)",
+  "dr_type": "full",
+  "s_components": 430,
+  "v_components": 133,
+  "s_auc_roc": 0.8811705340114431,
+  "v_auc_roc": 0.9121503496503497,
+  "s_mean_erc20": 7.658945880797579,
+  "v_mean_erc20": 6.12431787608181,
+  "has_transformer_s": false,
+  "has_transformer_v": false
+}

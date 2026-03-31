@@ -31,8 +31,8 @@ import torchaudio
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from implementation.vqi.providers import get_provider, TRAIN_PROVIDERS, PROVIDERS
 
-SPLITS_DIR = os.path.join("implementation", "data", "splits")
-OUTPUT_DIR = os.path.join("implementation", "data", "embeddings")
+SPLITS_DIR = os.path.join("implementation", "data", "step1", "splits")
+OUTPUT_DIR = os.path.join("implementation", "data", "step1", "embeddings")
 
 CHECKPOINT_EVERY = 10000
 

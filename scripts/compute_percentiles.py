@@ -5,9 +5,9 @@ percentile lookup tables (value at each percentile 0-100) for expert feedback.
 Also builds a consolidated feature-to-category mapping.
 
 Outputs:
-  data/feature_percentiles_s.npz  (430, 101)
-  data/feature_percentiles_v.npz  (133, 101)
-  data/feature_categories.json
+  data/step9/feature_percentiles_s.npz  (430, 101)
+  data/step9/feature_percentiles_v.npz  (133, 101)
+  data/step9/feature_categories.json
 """
 
 import json
@@ -124,9 +124,9 @@ def main():
     data_dir = os.path.join(BASE_DIR, "data")
 
     # Load feature names
-    with open(os.path.join(data_dir, "features", "feature_names_s.json"), "r", encoding="utf-8") as f:
+    with open(os.path.join(data_dir, "step4", "features", "feature_names_s.json"), "r", encoding="utf-8") as f:
         feature_names_s = json.load(f)
-    with open(os.path.join(data_dir, "features", "feature_names_v.json"), "r", encoding="utf-8") as f:
+    with open(os.path.join(data_dir, "step4", "features", "feature_names_v.json"), "r", encoding="utf-8") as f:
         feature_names_v = json.load(f)
     # V names may have empty first entry
     feature_names_v = [n for n in feature_names_v if n]
@@ -134,14 +134,14 @@ def main():
     print(f"All feature names: S={len(feature_names_s)}, V={len(feature_names_v)}")
 
     # Load selected features
-    selected_s = load_selected_features(os.path.join(data_dir, "evaluation", "selected_features.txt"))
-    selected_v = load_selected_features(os.path.join(data_dir, "evaluation_v", "selected_features.txt"))
+    selected_s = load_selected_features(os.path.join(data_dir, "step5", "evaluation", "selected_features.txt"))
+    selected_v = load_selected_features(os.path.join(data_dir, "step5", "evaluation_v", "selected_features.txt"))
     print(f"Selected features: S={len(selected_s)}, V={len(selected_v)}")
 
     # Load validation features
     print("Loading validation features...")
-    features_s = np.load(os.path.join(data_dir, "features", "features_s_val.npy"))
-    features_v = np.load(os.path.join(data_dir, "features", "features_v_val.npy"))
+    features_s = np.load(os.path.join(data_dir, "step4", "features", "features_s_val.npy"))
+    features_v = np.load(os.path.join(data_dir, "step4", "features", "features_v_val.npy"))
     print(f"Val features: S={features_s.shape}, V={features_v.shape}")
 
     # Compute percentile tables
@@ -155,12 +155,12 @@ def main():
 
     # Save percentile tables
     np.savez(
-        os.path.join(data_dir, "feature_percentiles_s.npz"),
+        os.path.join(data_dir, "step9", "feature_percentiles_s.npz"),
         percentiles=pct_s,
         feature_names=np.array(names_s),
     )
     np.savez(
-        os.path.join(data_dir, "feature_percentiles_v.npz"),
+        os.path.join(data_dir, "step9", "feature_percentiles_v.npz"),
         percentiles=pct_v,
         feature_names=np.array(names_v),
     )
@@ -186,7 +186,7 @@ def main():
     print(f"\nVQI-S category distribution: {s_cats}")
     print(f"VQI-V category distribution: {v_cats}")
 
-    with open(os.path.join(data_dir, "feature_categories.json"), "w", encoding="utf-8") as f:
+    with open(os.path.join(data_dir, "step9", "feature_categories.json"), "w", encoding="utf-8") as f:
         json.dump(categories, f, indent=2)
     print("Saved feature_categories.json")
 

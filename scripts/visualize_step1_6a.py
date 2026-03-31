@@ -22,7 +22,7 @@ from sklearn.decomposition import PCA
 from collections import Counter
 
 OUTPUT_DIR = r"D:\VQI\implementation\reports"
-EMBED_DIR = r"D:\VQI\implementation\data\embeddings"
+EMBED_DIR = r"D:\VQI\implementation\data\step1\embeddings"
 INDEX_CSV = os.path.join(EMBED_DIR, "train_pool_index.csv")
 
 PROVIDERS = {

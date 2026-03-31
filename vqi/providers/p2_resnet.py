@@ -12,7 +12,7 @@ import torchaudio
 
 from .base import SpeakerProvider
 
-SAVEDIR = "implementation/data/pretrained/p2_resnet"
+SAVEDIR = "implementation/data/step1/pretrained/p2_resnet"
 
 
 class P2_RESNET(SpeakerProvider):
